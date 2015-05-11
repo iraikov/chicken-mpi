@@ -1,0 +1,24 @@
+;; -*- Hen -*-
+
+((egg "mpi.egg") ; This should never change
+
+ ; List here all the files that should be bundled as part of your egg.  
+
+ (files "mpi.setup" "mpi.meta" "chicken-mpi.h" "group.scm" "comm.scm" "collcomm.scm" "mpi.scm" "msgs.scm" "init.scm" "tests" )
+
+ ; Your egg's license:
+
+ (license "GPL-3")
+
+ ; Pick one from the list of categories (see below) for your egg and
+ ; enter it here.
+
+ (category net)
+
+ ; A list of eggs mpi depends on.
+
+ (test-depends test)
+
+ (author "Ivan Raikov")
+
+ (synopsis "Message-passing Interface (MPI)"))

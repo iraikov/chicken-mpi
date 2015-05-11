@@ -1,0 +1,7 @@
+;; -*- scheme -*-
+(repo git "git://github.com/iraikov/chicken-mpi.git")
+(uri targz "https://github.com/iraikov/chicken-mpi/tarball/{egg-release}")
+(uri files-list "http://code.call-cc.org/files-list?egg={egg-name};release={egg-release}" old-uri)
+
+(release "1.15" old-uri)
+
