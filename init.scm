@@ -2,7 +2,7 @@
 ;; Chicken MPI interface. Based on the Caml/MPI interface by Xavier
 ;; Leroy.
 ;;
-;; Copyright 2007-2012 Ivan Raikov and the Okinawa Institute of Science and Technology
+;; Copyright 2007-2015 Ivan Raikov.
 ;;
 ;; This program is free software: you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -44,8 +44,13 @@ static void chicken_ThrowException(C_word value)
   if (C_immediatep(abort))
     Chicken_Panic(C_text("`##sys#abort' is not defined"));
 
+#if defined(C_BINARY_VERSION) && (C_BINARY_VERSION >= 8)
+  C_word rval[3] = { abort, C_SCHEME_UNDEFINED, value };
+  C_do_apply(3, rval);
+#else
   C_save(value);
   C_do_apply(1, abort, C_SCHEME_UNDEFINED);
+#endif
 }
 
 void chicken_MPI_exception (int code, int msglen, const char *msg) 

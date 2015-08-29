@@ -3,7 +3,7 @@
 ;; Chicken MPI interface. Based on the Caml/MPI interface by Xavier
 ;; Leroy.
 ;;
-;; Copyright 2007-2012 Ivan Raikov and the Okinawa Institute of Science and Technology
+;; Copyright 2007-2015 Ivan Raikov.
 ;;
 ;; This program is free software: you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -301,7 +301,12 @@ C_word MPI_send_bytevector (C_word data, C_word dest, C_word tag, C_word comm)
   ptr = C_alloc (C_SIZEOF_FLONUM);
   status_tag = C_int_to_num (&ptr, status.MPI_TAG);
 
-  C_values(5, C_SCHEME_UNDEFINED, C_k, status_count, status_source, status_tag);
+#if defined(C_BINARY_VERSION) && (C_BINARY_VERSION >= 8)
+  C_word rval[5] = { C_SCHEME_UNDEFINED, C_k, status_count, status_source, status_tag };
+  C_values(5, rval);
+#else
+  C_values(5, C_SCHEME_UNDEFINED, C_k, status_count, status_source, status_tag );
+#endif
 EOF
 ))
 
