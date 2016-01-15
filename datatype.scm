@@ -115,7 +115,7 @@ EOF
   MPI_check_datatype(ty);
   MPI_check_datatype(newty);
 
-  status = MPI_Type_Contiguous(count, *(Datatype_val(ty)), Datatype_val(newty));
+  status = MPI_Type_Contiguous(count, Datatype_val(ty), &(Datatype_val(newty)));
 
   if (status != MPI_SUCCESS) 
   {
