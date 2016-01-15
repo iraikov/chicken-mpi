@@ -21,6 +21,15 @@
 
 ;; Derived datatypes
 
+
+(define-record-type mpi-data
+  (make-mpi-data ty count buffer)
+  mpi-data?
+  (ty      mpi-data-ty)
+  (count   mpi-data-count)
+  (buffer  mpi-data-buffer))
+
+
 ;; Handling of datatypes 
 
 ; Include into generated code, but don't parse:
@@ -55,7 +64,172 @@ static C_word MPI_check_datatype (C_word obj)
 <#
 
 
+(define MPI_type_null
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_DATATYPE_NULL;
+
+   C_return (result);
+END
+))
+
+(define MPI_type_char
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_CHAR;
+
+   C_return (result);
+END
+))
+
+(define MPI_type_int
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   printf ("type-int = %p\n", MPI_LONG);
+   result = (C_word)MPI_LONG;
+
+   C_return (result);
+END
+))
+
+(define MPI_type_fixnum
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_INT;
+
+   C_return (result);
+END
+))
+
+(define MPI_type_flonum
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_DOUBLE;
+
+   C_return (result);
+END
+))
+
+
+(define MPI_type_u8
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_UNSIGNED_CHAR;
+
+   C_return (result);
+END
+))
+
+
+(define MPI_type_s8
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_CHAR;
+
+   C_return (result);
+END
+))
+
+
+(define MPI_type_u16
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_UNSIGNED_SHORT;
+
+   C_return (result);
+END
+))
+
+
+(define MPI_type_s16
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_SHORT;
+
+   C_return (result);
+END
+))
+
+
+(define MPI_type_u32
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_UNSIGNED;
+
+   C_return (result);
+END
+))
+
+
+(define MPI_type_s32
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_INT;
+
+   C_return (result);
+END
+))
+
+
+(define MPI_type_f32
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_FLOAT;
+
+   C_return (result);
+END
+))
+
+
+(define MPI_type_f64
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_DOUBLE;
+
+   C_return (result);
+END
+))
+
+
+(define MPI_type_byte
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_BYTE;
+
+   C_return (result);
+END
+))
+
 (define MPI:datatype? (foreign-lambda scheme-object "MPI_datatype_p" scheme-object))
+
 
 (define MPI_datatype_finalizer 
     (foreign-safe-lambda* void ((scheme-object ty))
@@ -65,7 +239,7 @@ static C_word MPI_check_datatype (C_word obj)
 
    x = Datatype_val (ty);
 
-   MPI_Type_free (*x);
+   MPI_Type_free (x);
 END
 ))
 
@@ -75,9 +249,12 @@ END
 
    C_word result;
    chicken_MPI_datatype_t newdatatype;
+   MPI_Datatype *ty = malloc(sizeof(MPI_Datatype));
+
+   printf ("alloc: ty = %p\n", ty);
 
    newdatatype.tag = MPI_DATATYPE_TAG;
-   newdatatype.datatype_data = 0;
+   newdatatype.datatype_data = ty;
    result = (C_word)&newdatatype;
 
    //C_do_register_finalizer(result, finalizer);
@@ -85,6 +262,28 @@ END
    C_return (result);
 END
 ))
+
+
+(define MPI_copy_datatype 
+    (foreign-primitive scheme-object ((nonnull-c-pointer cty) (scheme-object finalizer))
+#<<END
+
+   C_word result;
+   chicken_MPI_datatype_t newdatatype;
+
+   newdatatype.tag = MPI_DATATYPE_TAG;
+   newdatatype.datatype_data = cty;
+   result = (C_word)&newdatatype;
+
+   //C_do_register_finalizer(result, finalizer);
+   
+   C_return (result);
+END
+))
+
+
+(define MPI:datatype? (foreign-lambda scheme-object "MPI_datatype_p" scheme-object))
+
 
 ;; Commits a datatype
 (define MPI:commit 
@@ -115,7 +314,9 @@ EOF
   MPI_check_datatype(ty);
   MPI_check_datatype(newty);
 
-  status = MPI_Type_Contiguous(count, *(Datatype_val(ty)), Datatype_val(newty));
+  printf ("ty = %p newty = %p\n", Datatype_val(ty), Datatype_val(newty));
+  status = MPI_Type_Contiguous(count, *((MPI_Datatype *)(Datatype_val(ty))), (MPI_Datatype *)(Datatype_val(newty)));
+  printf ("after contig\n");
 
   if (status != MPI_SUCCESS) 
   {
@@ -151,5 +352,70 @@ EOF
   (let ((newty (MPI_alloc_datatype MPI_datatype_finalizer)))
     (MPI_type_contiguous count ty newty)
     newty))
+
+  
+(define (MPI:type-fixnum)
+  (let ((newty (MPI_copy_datatype (MPI_type_fixnum) MPI_datatype_finalizer)))
+    newty))
+
+  
+(define (MPI:type-int)
+  (let ((newty (MPI_copy_datatype (MPI_type_int) MPI_datatype_finalizer)))
+    newty))
+
+  
+(define (MPI:type-char)
+  (let ((newty (MPI_copy_datatype (MPI_type_char) MPI_datatype_finalizer)))
+    newty))
+
+  
+(define (MPI:type-flonum)
+  (let ((newty (MPI_copy_datatype (MPI_type_flonum) MPI_datatype_finalizer)))
+    newty))
+
+  
+(define (MPI:type-s8)
+  (let ((newty (MPI_copy_datatype (MPI_type_s8) MPI_datatype_finalizer)))
+    newty))
+
+  
+(define (MPI:type-u8)
+  (let ((newty (MPI_copy_datatype (MPI_type_u8) MPI_datatype_finalizer)))
+    newty))
+
+  
+(define (MPI:type-s16)
+  (let ((newty (MPI_copy_datatype (MPI_type_s16) MPI_datatype_finalizer)))
+    newty))
+
+  
+(define (MPI:type-u16)
+  (let ((newty (MPI_copy_datatype (MPI_type_u16) MPI_datatype_finalizer)))
+    newty))
+
+  
+(define (MPI:type-s32)
+  (let ((newty (MPI_copy_datatype (MPI_type_s32) MPI_datatype_finalizer)))
+    newty))
+
+  
+(define (MPI:type-u32)
+  (let ((newty (MPI_copy_datatype (MPI_type_u32) MPI_datatype_finalizer)))
+    newty))
+
+  
+(define (MPI:type-f32)
+  (let ((newty (MPI_copy_datatype (MPI_type_f32) MPI_datatype_finalizer)))
+    newty))
+
+  
+(define (MPI:type-f64)
+  (let ((newty (MPI_copy_datatype (MPI_type_f64) MPI_datatype_finalizer)))
+    newty))
   
 
+(define (MPI:type-byte)
+  (let ((newty (MPI_copy_datatype (MPI_type_byte) MPI_datatype_finalizer)))
+    newty))
+
+  
