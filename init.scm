@@ -226,6 +226,8 @@ EOF
   char ** argv; char *s;
   MPI_Errhandler hdlr;
   C_word x, tail;
+  MPI_Datatype newty;
+  int status;
 
   C_i_check_list (arguments);
   if (C_i_listp (arguments))
@@ -262,6 +264,10 @@ EOF
        argv[i] = NULL;
         
        MPI_Init(&argc, &argv);
+
+       printf ("before contig\n");
+       status = MPI_Type_Contiguous(15, MPI_LONG, &newty);
+       printf ("contig status = %d\n", status);
 
        for (i = 0; i < argc; i++)
        {  

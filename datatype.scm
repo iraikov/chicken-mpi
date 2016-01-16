@@ -91,7 +91,6 @@ END
 #<<END
    C_word result;
 
-   printf ("type-int = %p\n", MPI_LONG);
    result = (C_word)MPI_LONG;
 
    C_return (result);
@@ -234,7 +233,7 @@ END
 (define MPI_datatype_finalizer 
     (foreign-safe-lambda* void ((scheme-object ty))
 #<<END
-   MPI_Datatype *x;
+   MPI_Datatype x;
    MPI_check_datatype (ty);
 
    x = Datatype_val (ty);
@@ -249,9 +248,7 @@ END
 
    C_word result;
    chicken_MPI_datatype_t newdatatype;
-   MPI_Datatype *ty = malloc(sizeof(MPI_Datatype));
-
-   printf ("alloc: ty = %p\n", ty);
+   MPI_Datatype ty;
 
    newdatatype.tag = MPI_DATATYPE_TAG;
    newdatatype.datatype_data = ty;
@@ -282,11 +279,9 @@ END
 ))
 
 
-(define MPI:datatype? (foreign-lambda scheme-object "MPI_datatype_p" scheme-object))
-
 
 ;; Commits a datatype
-(define MPI:commit 
+(define MPI:type-commit 
     (foreign-lambda* void ((scheme-object ty))
 #<<EOF
   int status;
@@ -305,23 +300,30 @@ EOF
 
 
 (define MPI_type_contiguous 
-    (foreign-lambda* void ((int count)
-                           (scheme-object ty)
-                           (scheme-object newty))
+    (foreign-primitive scheme-object ((int count)
+                                      (scheme-object ty))
 #<<EOF
   int status;
+  C_word result;
+  chicken_MPI_datatype_t newdatatype;
+  MPI_Datatype newty;
 
   MPI_check_datatype(ty);
-  MPI_check_datatype(newty);
+  
+  newdatatype.tag = MPI_DATATYPE_TAG;
+  newdatatype.datatype_data = &newty;
+  result = (C_word)&newdatatype;
 
-  printf ("ty = %p newty = %p\n", Datatype_val(ty), Datatype_val(newty));
-  status = MPI_Type_Contiguous(count, *((MPI_Datatype *)(Datatype_val(ty))), (MPI_Datatype *)(Datatype_val(newty)));
-  printf ("after contig\n");
+  status = MPI_Type_Contiguous(count, MPI_LONG, &newty);
+  //status = MPI_Type_Contiguous(count, Datatype_val(ty), &newty);
 
   if (status != MPI_SUCCESS) 
   {
     chicken_MPI_exception (MPI_ERR_TYPE, 31, "invalid MPI datatype contiguous");
   }
+
+  result = (C_word)&newdatatype;
+  C_return(result);
   
 EOF
 ))
@@ -349,9 +351,7 @@ EOF
 
 
 (define (MPI:type-contiguous count ty)
-  (let ((newty (MPI_alloc_datatype MPI_datatype_finalizer)))
-    (MPI_type_contiguous count ty newty)
-    newty))
+    (MPI_type_contiguous count ty))
 
   
 (define (MPI:type-fixnum)
