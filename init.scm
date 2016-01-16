@@ -2,7 +2,7 @@
 ;; Chicken MPI interface. Based on the Caml/MPI interface by Xavier
 ;; Leroy.
 ;;
-;; Copyright 2007-2015 Ivan Raikov.
+;; Copyright 2007-2016 Ivan Raikov.
 ;;
 ;; This program is free software: you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -123,7 +123,6 @@ static void MPI_error_handler(MPI_Comm * comm, int * errcode, ...)
 
        argv[i] = NULL;
 
-
        MPI_Info_create(&info);
 
        C_i_check_list (locations);
@@ -136,7 +135,7 @@ static void MPI_error_handler(MPI_Comm * comm, int * errcode, ...)
           if ((locc > 0) && (locv != NULL))
           {
             tail = locations;
-            for (i = 0; i < locc; i++) 
+            for (i = 0; i < locc; i+=2) 
             {
  	       x = C_u_i_car (tail);
 	       tail = C_u_i_cdr (tail);
@@ -164,7 +163,6 @@ static void MPI_error_handler(MPI_Comm * comm, int * errcode, ...)
 		  MPI_Info_set(info, skey, sval);
                   locv[i] = skey;
                   locv[i+1] = sval;
-
 	       }
 
             }
@@ -177,7 +175,7 @@ static void MPI_error_handler(MPI_Comm * comm, int * errcode, ...)
 
        MPI_Info_free (&info);
 
-       for (i = 0; i < locc; i++)
+       for (i = 0; i < locc; i+=2)
        {  
           skey = locv[i];
           sval = locv[i+1];
@@ -189,8 +187,9 @@ static void MPI_error_handler(MPI_Comm * comm, int * errcode, ...)
 	  {
 	     free (sval);
           }
+          locv[i] = NULL;
+          locv[i+1] = NULL;
        }
-       memset (locv, (int)NULL, locvsz);
        free (locv);
 
        for (i = 0; i < argc; i++)
@@ -200,8 +199,8 @@ static void MPI_error_handler(MPI_Comm * comm, int * errcode, ...)
 	  {
 	     free (s);
           }
+          argv[i] = NULL;
        }
-       memset (argv, (int)NULL, argvsz);
        free (argv);
      }
   }
@@ -271,8 +270,8 @@ EOF
 	  {
 	     free (s);
           }
+          argv[i] = NULL;
        }
-       memset (argv, (int)NULL, argvsz);
        free (argv);
      }
      MPI_Errhandler_create((MPI_Handler_function *)MPI_error_handler, &hdlr);
