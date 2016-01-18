@@ -164,8 +164,19 @@
   MPI:datatype?
   MPI:type-extent
   MPI:type-size
-  MPI:type-int
   MPI:type-char
+  MPI:type-int
+  MPI:type-fixnum
+  MPI:type-flonum
+  MPI:type-byte
+  MPI:type-s8
+  MPI:type-u8
+  MPI:type-s16
+  MPI:type-u16
+  MPI:type-s32
+  MPI:type-u32
+  MPI:type-f32
+  MPI:type-f64
   MPI:make-type-struct
   
   MPI:init

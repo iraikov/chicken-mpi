@@ -91,7 +91,6 @@ END
 #<<END
    C_word result;
 
-   printf ("type-int = %p\n", MPI_LONG);
    result = (C_word)MPI_LONG;
 
    C_return (result);
@@ -273,6 +272,61 @@ END
                       MPI_datatype_finalizer))
   
 
+(define MPI:type-fixnum 
+  (MPI_alloc_datatype (foreign-value "MPI_INT" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+(define MPI:type-flonum 
+  (MPI_alloc_datatype (foreign-value "MPI_DOUBLE" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+(define MPI:type-byte 
+  (MPI_alloc_datatype (foreign-value "MPI_BYTE" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+(define MPI:type-s8 
+  (MPI_alloc_datatype (foreign-value "MPI_SIGNED_CHAR" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+(define MPI:type-u8 
+  (MPI_alloc_datatype (foreign-value "MPI_UNSIGNED_CHAR" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+(define MPI:type-s16
+  (MPI_alloc_datatype (foreign-value "MPI_SHORT" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+(define MPI:type-u16
+  (MPI_alloc_datatype (foreign-value "MPI_UNSIGNED_SHORT" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+(define MPI:type-s32
+  (MPI_alloc_datatype (foreign-value "MPI_INT" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+(define MPI:type-u32
+  (MPI_alloc_datatype (foreign-value "MPI_UNSIGNED" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+(define MPI:type-f32
+  (MPI_alloc_datatype (foreign-value "MPI_FLOAT" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+(define MPI:type-f64
+  (MPI_alloc_datatype (foreign-value "MPI_DOUBLE" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
 
 (define MPI:make-type-struct 
     (foreign-primitive scheme-object ((int fieldcount)
@@ -322,13 +376,11 @@ END
      array_of_types[i] = Datatype_val(x);
   }
 
-  printf("before type_create_struct\n");
   status = MPI_Type_create_struct(fieldcount, 
                                   array_of_blocklens,
                                   array_of_displs,
                                   array_of_types,
                                   &newtype);
-  printf("after type_create_struct\n");
 
   free(array_of_blocklens);
   free(array_of_displs);
@@ -355,10 +407,11 @@ EOF
 ))
 
 
-(define MPI:type-extent 
-    (foreign-safe-lambda* int ((scheme-object ty))
+(define MPI_type_extent 
+    (foreign-safe-lambda* void ((scheme-object ty)
+                                (u32vector result))
 #<<EOF
-  int status, result;
+  int status;
   MPI_Aint lb, extent;
 
   MPI_check_datatype(ty);
@@ -370,12 +423,19 @@ EOF
     chicken_MPI_exception (MPI_ERR_TYPE, 20, "invalid MPI datatype");
   }
 
-  result = (int)extent;
-  C_return(result);
+  result[0] = (int)extent;
+  result[1] = (int)lb;
   
 EOF
 ))
 
+
+(define (MPI:type-extent ty)
+  (let ((result (make-u32vector 2 0)))
+    (MPI_type_extent ty result)
+    (u32vector->list result)
+    ))
+  
 
 
 (define MPI:type-size 
