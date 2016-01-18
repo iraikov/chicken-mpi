@@ -147,6 +147,7 @@
   MPI:make-dims
   MPI:cart-rank
   MPI:cart-coords
+
   MPI:group? 
   MPI:group-size
   MPI:group-rank
@@ -159,10 +160,19 @@
   MPI:group-excl 
   MPI:group-range-incl
   MPI:group-range-excl
+
+  MPI:datatype?
+  MPI:type-extent
+  MPI:type-size
+  MPI:type-int
+  MPI:type-char
+  MPI:make-type-struct
+  
   MPI:init
   MPI:spawn
   MPI:finalize 
   MPI:wtime 
+
   MPI:send
   MPI:send-fixnum
   MPI:send-int 
@@ -219,6 +229,7 @@
 <#
 
 (include "init")
+(include "datatype")
 (include "group")
 (include "comm")
 (include "msgs")

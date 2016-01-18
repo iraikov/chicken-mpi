@@ -33,10 +33,10 @@
    (mpi-test ("#include <mpi.h>" "-lmpi" "-I/usr/lib/openmpi/include"))
    (error "unable to figure out location of MPI library; try setting environment variable MPI_DIR to the proper location")))
 
-(compile -S -O2 -d0 -I. -s mpi.scm  -j mpi 
+(compile -S -O0 -d2 -I. -s mpi.scm  -j mpi 
 	 -L "\"" ,(car ld+cpp-options) "\"" 
 	 -C "\"" ,(cdr ld+cpp-options) "\"")
-(compile -O2 -d0 -s mpi.import.scm)
+(compile -O0 -d2 -s mpi.import.scm)
 
 (install-extension
 
