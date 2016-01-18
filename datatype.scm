@@ -21,6 +21,15 @@
 
 ;; Derived datatypes
 
+
+(define-record-type mpi-data
+  (make-mpi-data ty count buffer)
+  mpi-data?
+  (ty      mpi-data-ty)
+  (count   mpi-data-count)
+  (buffer  mpi-data-buffer))
+
+
 ;; Handling of datatypes 
 
 ; Include into generated code, but don't parse:
@@ -55,7 +64,172 @@ static C_word MPI_check_datatype (C_word obj)
 <#
 
 
+(define MPI_type_null
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_DATATYPE_NULL;
+
+   C_return (result);
+END
+))
+
+(define MPI_type_char
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_CHAR;
+
+   C_return (result);
+END
+))
+
+(define MPI_type_int
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   printf ("type-int = %p\n", MPI_LONG);
+   result = (C_word)MPI_LONG;
+
+   C_return (result);
+END
+))
+
+(define MPI_type_fixnum
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_INT;
+
+   C_return (result);
+END
+))
+
+(define MPI_type_flonum
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_DOUBLE;
+
+   C_return (result);
+END
+))
+
+
+(define MPI_type_u8
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_UNSIGNED_CHAR;
+
+   C_return (result);
+END
+))
+
+
+(define MPI_type_s8
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_CHAR;
+
+   C_return (result);
+END
+))
+
+
+(define MPI_type_u16
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_UNSIGNED_SHORT;
+
+   C_return (result);
+END
+))
+
+
+(define MPI_type_s16
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_SHORT;
+
+   C_return (result);
+END
+))
+
+
+(define MPI_type_u32
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_UNSIGNED;
+
+   C_return (result);
+END
+))
+
+
+(define MPI_type_s32
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_INT;
+
+   C_return (result);
+END
+))
+
+
+(define MPI_type_f32
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_FLOAT;
+
+   C_return (result);
+END
+))
+
+
+(define MPI_type_f64
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_DOUBLE;
+
+   C_return (result);
+END
+))
+
+
+(define MPI_type_byte
+    (foreign-primitive nonnull-c-pointer ()
+#<<END
+   C_word result;
+
+   result = (C_word)MPI_BYTE;
+
+   C_return (result);
+END
+))
+
 (define MPI:datatype? (foreign-lambda scheme-object "MPI_datatype_p" scheme-object))
+
 
 (define MPI_datatype_finalizer 
     (foreign-safe-lambda* void ((scheme-object ty))
@@ -86,6 +260,7 @@ END
    C_return (result);
 END
 ))
+
 
 
 (define MPI:type-char 
@@ -147,11 +322,13 @@ END
      array_of_types[i] = Datatype_val(x);
   }
 
+  printf("before type_create_struct\n");
   status = MPI_Type_create_struct(fieldcount, 
                                   array_of_blocklens,
                                   array_of_displs,
                                   array_of_types,
                                   &newtype);
+  printf("after type_create_struct\n");
 
   free(array_of_blocklens);
   free(array_of_displs);
@@ -221,5 +398,4 @@ EOF
   
 EOF
 ))
-
 

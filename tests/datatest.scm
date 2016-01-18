@@ -29,6 +29,7 @@
 
 (define newty (MPI:make-type-struct nflds blocklens displs fieldtys))
 (print newty)
+
 (print (MPI:datatype? newty))
 (print (MPI:type-extent newty))
 (print (MPI:type-size newty))
