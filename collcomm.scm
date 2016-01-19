@@ -107,6 +107,23 @@ END
 
 #>
 
+C_word MPI_broadcast_data(C_word ty, int count, C_word data, C_word root, C_word comm)
+{
+  int vroot, len; char *vect;
+
+  MPI_check_comm (comm);
+  MPI_check_datatype (ty);
+  C_i_check_bytevector (data);
+
+  vroot = (int)C_num_to_int (root);
+  len   = C_bytevector_length(data);
+  vect  = C_c_bytevector (data);
+
+  MPI_Bcast(vect, count, Datatype_val(ty), vroot, Comm_val(comm));
+
+  C_return (data);
+}
+
 C_word MPI_broadcast_bytevector(C_word data, C_word root, C_word comm)
 {
   int vroot, len; char *vect;
@@ -270,6 +287,8 @@ C_word MPI_broadcast_f64vector (C_word data, C_word root, C_word comm)
 
 (define MPI_broadcast_bytevector (foreign-lambda scheme-object "MPI_broadcast_bytevector" 
 						 scheme-object scheme-object scheme-object ))
+(define MPI_broadcast_data (foreign-lambda scheme-object "MPI_broadcast_data" 
+                                           scheme-object int scheme-object scheme-object scheme-object ))
 
   
 (define (make-bcast obj-size make-obj bcast)
@@ -285,9 +304,6 @@ C_word MPI_broadcast_f64vector (C_word data, C_word root, C_word comm)
 	  (let* ((len     (MPI:broadcast-fixnum 0 root comm))
 		 (buffer  (make-obj len)))
 	    (bcast buffer root comm))))))
-
-(define MPI:broadcast-bytevector
-  (make-bcast blob-size make-blob MPI_broadcast_bytevector))
 
 (define-syntax define-srfi4-broadcast
   (lambda (x r c)
@@ -308,6 +324,27 @@ C_word MPI_broadcast_f64vector (C_word data, C_word root, C_word comm)
 (define-srfi4-broadcast u32)
 (define-srfi4-broadcast f32)
 (define-srfi4-broadcast f64)
+
+
+(define MPI:broadcast-bytevector
+  (make-bcast blob-size make-blob MPI_broadcast_bytevector))
+
+
+(define (MPI:broadcast-data ty count v root comm)
+  (let ((myself (MPI:comm-rank comm)))
+    (if (= root myself)
+        ;; if this is the root process, broadcast the data
+        (begin
+          (MPI:broadcast-fixnum count root comm)
+          (MPI_broadcast_data ty count v root comm))
+        ;; Other processes receive the data length, allocate a buffer
+        ;; and receive the data
+        (let* ((count   (MPI:broadcast-fixnum 0 root comm))
+               (buffer  (make-blob (* count (MPI:type-size ty)))))
+          (MPI_broadcast_data ty count buffer root comm))
+        ))
+  )
+
 
 #>
 
@@ -466,6 +503,33 @@ END
 ))
 
 #>
+
+
+C_word MPI_scatter_data (C_word ty, C_word data, int sendcount, C_word recv, C_word root, C_word comm)
+{
+  unsigned char *vect, *vrecv; int  vroot;
+  C_word result; C_word *ptr;
+
+  MPI_check_comm(comm);
+  MPI_check_datatype(ty);
+  C_i_check_bytevector (recv);
+
+  vroot  = (int)C_num_to_int (root);
+  vrecv  = C_c_bytevector(recv);
+
+  if (data == C_SCHEME_UNDEFINED)
+  {
+     MPI_Scatter(NULL, 0, MPI_DATATYPE_NULL, vrecv, sendcount, Datatype_val(ty), vroot, Comm_val(comm));
+  }
+  else
+  {
+     C_i_check_bytevector (data);
+     vect  = C_c_bytevector(data);
+     MPI_Scatter(vect, sendcount, Datatype_val(ty), vrecv, sendcount, Datatype_val(ty), vroot, Comm_val(comm));
+  }
+
+  C_return (recv);
+}
 
 
 C_word MPI_scatter_bytevector (C_word data, C_word sendcount, C_word recv, C_word root, C_word comm)
@@ -706,6 +770,45 @@ C_word MPI_scatter_f64vector (C_word data, C_word sendcount, C_word recv, C_word
   }
 
   C_return (recv);
+}
+
+
+C_word MPI_scatterv_data (C_word ty, C_word sendbuf, C_word sendlengths, 
+                          C_word recvbuf, int recvcount, C_word root, C_word comm,
+                          C_word sendcounts, C_word displs)
+{
+  int len, vroot; int *vsendlengths, *vsendcounts, *vdispls;
+
+  MPI_check_comm (comm);
+  MPI_check_datatype (ty);
+
+  C_i_check_bytevector (recvbuf);
+
+  vroot = (int)C_num_to_int (root);
+
+  if (sendbuf == C_SCHEME_UNDEFINED)
+  {
+     MPI_Scatterv(NULL, NULL, NULL, MPI_DATATYPE_NULL,
+                  C_c_bytevector(recvbuf), recvcount,
+                  Datatype_val(ty), vroot, Comm_val(comm));
+  }
+  else
+  {
+     C_i_check_bytevector (sendbuf);
+
+     len           = C_32vector_length(sendlengths);
+     vsendlengths  = C_c_s32vector(sendlengths);
+     vsendcounts   = C_c_s32vector(sendcounts);
+     vdispls       = C_c_s32vector(displs);
+
+     MPI_counts_displs(len, vsendlengths, vsendcounts, vdispls);
+
+     MPI_Scatterv(C_c_bytevector(sendbuf), vsendcounts, vdispls, Datatype_val(ty),
+                  C_c_bytevector(recvbuf), recvcount, Datatype_val(ty),
+                  vroot, Comm_val(comm));
+  }
+
+  C_return (recvbuf);
 }
 
 
@@ -1042,8 +1145,11 @@ C_word MPI_scatterv_f64vector (C_word sendbuf, C_word sendlengths,
 					      scheme-object scheme-object scheme-object scheme-object scheme-object))
 
 
+(define MPI_scatter_data (foreign-lambda scheme-object "MPI_scatter_data" 
+                                         scheme-object scheme-object int scheme-object scheme-object scheme-object ))
+
 (define MPI_scatter_bytevector (foreign-lambda scheme-object "MPI_scatter_bytevector" 
-					       scheme-object scheme-object scheme-object scheme-object scheme-object ))
+					       scheme-object scheme-object scheme-object scheme-object ))
 
 
 (define (make-scatter make-obj obj-len scatter)
@@ -1071,8 +1177,6 @@ C_word MPI_scatterv_f64vector (C_word sendbuf, C_word sendlengths,
     (if (< (f64vector-length data) nprocs)
 	(error 'MPI:scatter-flonum "send data length is less than n "))
     (MPI_scatter_flonum data root comm)))
-
-(define MPI:scatter-bytevector (make-scatter make-blob blob-size MPI_scatter_bytevector))
 	  
 (define-syntax define-srfi4-scatter
   (lambda (x r c)
@@ -1092,6 +1196,23 @@ C_word MPI_scatterv_f64vector (C_word sendbuf, C_word sendlengths,
 (define-srfi4-scatter u32)
 (define-srfi4-scatter f32)
 (define-srfi4-scatter f64)
+
+
+(define MPI:scatter-bytevector (make-scatter make-blob blob-size MPI_scatter_bytevector))
+
+(define (MPI:scatter-data ty v sendcount root comm)
+    (let ((myself (MPI:comm-rank comm))
+	  (nprocs (MPI:comm-size comm))
+          (tysize (MPI:type-size ty)))
+      (if (= root myself)
+	  ;; If this is the root process, scatter the data
+	  (if (= (* nprocs sendcount tysize) (blob-length v))
+	      (let* ((recv (make-blob (* tysize sendcount))))
+		(MPI_scatter_data ty v sendcount recv root comm))
+	      (error 'MPI:scatter "send data length is less than n * sendcount"))
+	  ;; Other processes allocate a buffer and receive the data
+	  (let ((recv  (make-obj sendcount)))
+	    (scatter (void) sendcount recv root comm))))))
 
 
 (define MPI_scatterv_bytevector (foreign-lambda scheme-object "MPI_scatterv_bytevector" 

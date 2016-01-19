@@ -22,14 +22,6 @@
 ;; Derived datatypes
 
 
-(define-record-type mpi-data
-  (make-mpi-data ty count buffer)
-  mpi-data?
-  (ty      mpi-data-ty)
-  (count   mpi-data-count)
-  (buffer  mpi-data-buffer))
-
-
 ;; Handling of datatypes 
 
 ; Include into generated code, but don't parse:
