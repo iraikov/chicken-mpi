@@ -31,7 +31,7 @@ static const C_header MPI_GROUP_TAG =
 
 typedef struct chicken_MPI_datatype_struct {
      C_header tag;
-     void *datatype_data;
+     MPI_Datatype *datatype_data;
 } chicken_MPI_datatype_t;
 
 static const C_header MPI_DATATYPE_TAG = 

@@ -22,14 +22,6 @@
 ;; Derived datatypes
 
 
-(define-record-type mpi-data
-  (make-mpi-data ty count buffer)
-  mpi-data?
-  (ty      mpi-data-ty)
-  (count   mpi-data-count)
-  (buffer  mpi-data-buffer))
-
-
 ;; Handling of datatypes 
 
 ; Include into generated code, but don't parse:
@@ -238,31 +230,13 @@ END
 
    x = Datatype_val (ty);
 
-   MPI_Type_free (x);
+   MPI_Type_free (&x);
 END
 ))
 
 (define MPI_alloc_datatype 
-    (foreign-primitive scheme-object ((scheme-object finalizer))
-#<<END
-
-   C_word result;
-   chicken_MPI_datatype_t newdatatype;
-   MPI_Datatype ty;
-
-   newdatatype.tag = MPI_DATATYPE_TAG;
-   newdatatype.datatype_data = ty;
-   result = (C_word)&newdatatype;
-
-   //C_do_register_finalizer(result, finalizer);
-   
-   C_return (result);
-END
-))
-
-
-(define MPI_copy_datatype 
-    (foreign-primitive scheme-object ((nonnull-c-pointer cty) (scheme-object finalizer))
+    (foreign-primitive scheme-object ((nonnull-c-pointer cty)
+                                      (scheme-object finalizer))
 #<<END
 
    C_word result;
@@ -280,142 +254,198 @@ END
 
 
 
-;; Commits a datatype
-(define MPI:type-commit 
-    (foreign-lambda* void ((scheme-object ty))
+(define MPI:type-char 
+  (MPI_alloc_datatype (foreign-value "MPI_CHAR" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+(define MPI:type-int 
+  (MPI_alloc_datatype (foreign-value "MPI_LONG" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+(define MPI:type-fixnum 
+  (MPI_alloc_datatype (foreign-value "MPI_INT" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+(define MPI:type-flonum 
+  (MPI_alloc_datatype (foreign-value "MPI_DOUBLE" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+(define MPI:type-byte 
+  (MPI_alloc_datatype (foreign-value "MPI_BYTE" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+(define MPI:type-s8 
+  (MPI_alloc_datatype (foreign-value "MPI_SIGNED_CHAR" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+(define MPI:type-u8 
+  (MPI_alloc_datatype (foreign-value "MPI_UNSIGNED_CHAR" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+(define MPI:type-s16
+  (MPI_alloc_datatype (foreign-value "MPI_SHORT" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+(define MPI:type-u16
+  (MPI_alloc_datatype (foreign-value "MPI_UNSIGNED_SHORT" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+(define MPI:type-s32
+  (MPI_alloc_datatype (foreign-value "MPI_INT" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+(define MPI:type-u32
+  (MPI_alloc_datatype (foreign-value "MPI_UNSIGNED" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+(define MPI:type-f32
+  (MPI_alloc_datatype (foreign-value "MPI_FLOAT" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+(define MPI:type-f64
+  (MPI_alloc_datatype (foreign-value "MPI_DOUBLE" nonnull-c-pointer) 
+                      MPI_datatype_finalizer))
+  
+
+
+(define MPI:make-type-struct 
+    (foreign-primitive scheme-object ((int fieldcount)
+                                      (scheme-object blocklens)
+                                      (scheme-object displs)
+                                      (scheme-object fieldtys))
 #<<EOF
-  int status;
+  int i, status;
+  int *array_of_blocklens;
+  MPI_Aint *array_of_displs;
+  MPI_Datatype *array_of_types, newtype;
+  chicken_MPI_datatype_t newdatatype;
+  C_word result, x, tail;
 
-  MPI_check_datatype(ty);
+  C_i_check_list (blocklens);
+  C_i_check_list (displs);
+  C_i_check_list (fieldtys);
 
-  status = MPI_Commit(Datatype_val(ty));
+  if (!(fieldcount > 0))
+  {
+    chicken_MPI_exception (MPI_ERR_TYPE, 32, "invalid MPI struct datatype size");
+  }
+
+  array_of_blocklens = malloc(fieldcount*sizeof(int));
+  array_of_displs = malloc(fieldcount*sizeof(MPI_Aint));
+  array_of_types = malloc(fieldcount*sizeof(MPI_Datatype));
+
+  tail = blocklens;
+  for (i=0; i<fieldcount; i++)
+  {
+     x = C_u_i_car (tail);
+     tail = C_u_i_cdr (tail);
+     array_of_blocklens[i] = C_num_to_int(x);
+  }
+  tail = displs;
+  for (i=0; i<fieldcount; i++)
+  {
+     x = C_u_i_car (tail);
+     tail = C_u_i_cdr (tail);
+     array_of_displs[i] = C_num_to_int(x);
+  }
+  tail = fieldtys;
+  for (i=0; i<fieldcount; i++)
+  {
+     x = C_u_i_car (tail);
+     tail = C_u_i_cdr (tail);
+     array_of_types[i] = Datatype_val(x);
+  }
+
+  status = MPI_Type_create_struct(fieldcount, 
+                                  array_of_blocklens,
+                                  array_of_displs,
+                                  array_of_types,
+                                  &newtype);
+
+  free(array_of_blocklens);
+  free(array_of_displs);
+  free(array_of_types);
+
+  if (status != MPI_SUCCESS) 
+  {
+    chicken_MPI_exception (MPI_ERR_TYPE, 26, "invalid MPI struct datatype");
+  }
+
+  status = MPI_Type_commit(&newtype);
 
   if (status != MPI_SUCCESS) 
   {
     chicken_MPI_exception (MPI_ERR_TYPE, 27, "invalid MPI datatype commit");
   }
-  
-EOF
-))
 
-
-(define MPI_type_contiguous 
-    (foreign-primitive scheme-object ((int count)
-                                      (scheme-object ty))
-#<<EOF
-  int status;
-  C_word result;
-  chicken_MPI_datatype_t newdatatype;
-  MPI_Datatype newty;
-
-  MPI_check_datatype(ty);
-  
   newdatatype.tag = MPI_DATATYPE_TAG;
-  newdatatype.datatype_data = &newty;
+  newdatatype.datatype_data = (void *)newtype;
   result = (C_word)&newdatatype;
 
-  status = MPI_Type_Contiguous(count, MPI_LONG, &newty);
-  //status = MPI_Type_Contiguous(count, Datatype_val(ty), &newty);
-
-  if (status != MPI_SUCCESS) 
-  {
-    chicken_MPI_exception (MPI_ERR_TYPE, 31, "invalid MPI datatype contiguous");
-  }
-
-  result = (C_word)&newdatatype;
   C_return(result);
-  
 EOF
 ))
 
 
-(define MPI:type-extent 
-    (foreign-lambda* int ((scheme-object ty))
+(define MPI_type_extent 
+    (foreign-safe-lambda* void ((scheme-object ty)
+                                (u32vector result))
 #<<EOF
   int status;
-  int count;
+  MPI_Aint lb, extent;
 
   MPI_check_datatype(ty);
 
-  status = MPI_Type_extent(Datatype_val(ty), &count);
+  status = MPI_Type_get_extent(Datatype_val(ty), &lb, &extent);
 
   if (status != MPI_SUCCESS) 
   {
     chicken_MPI_exception (MPI_ERR_TYPE, 20, "invalid MPI datatype");
   }
 
-  return count;
+  result[0] = (int)extent;
+  result[1] = (int)lb;
   
 EOF
 ))
 
 
-(define (MPI:type-contiguous count ty)
-    (MPI_type_contiguous count ty))
+(define (MPI:type-extent ty)
+  (let ((result (make-u32vector 2 0)))
+    (MPI_type_extent ty result)
+    (u32vector->list result)
+    ))
 
-  
-(define (MPI:type-fixnum)
-  (let ((newty (MPI_copy_datatype (MPI_type_fixnum) MPI_datatype_finalizer)))
-    newty))
 
-  
-(define (MPI:type-int)
-  (let ((newty (MPI_copy_datatype (MPI_type_int) MPI_datatype_finalizer)))
-    newty))
+(define MPI:type-size 
+    (foreign-safe-lambda* int ((scheme-object ty))
+#<<EOF
+  int status, result;
+  int size;
 
-  
-(define (MPI:type-char)
-  (let ((newty (MPI_copy_datatype (MPI_type_char) MPI_datatype_finalizer)))
-    newty))
+  MPI_check_datatype(ty);
 
-  
-(define (MPI:type-flonum)
-  (let ((newty (MPI_copy_datatype (MPI_type_flonum) MPI_datatype_finalizer)))
-    newty))
+  status = MPI_Type_size(Datatype_val(ty), &size);
 
-  
-(define (MPI:type-s8)
-  (let ((newty (MPI_copy_datatype (MPI_type_s8) MPI_datatype_finalizer)))
-    newty))
+  if (status != MPI_SUCCESS) 
+  {
+    chicken_MPI_exception (MPI_ERR_TYPE, 20, "invalid MPI datatype");
+  }
 
+  result = (int)size;
+  C_return(result);
   
-(define (MPI:type-u8)
-  (let ((newty (MPI_copy_datatype (MPI_type_u8) MPI_datatype_finalizer)))
-    newty))
+EOF
+))
 
-  
-(define (MPI:type-s16)
-  (let ((newty (MPI_copy_datatype (MPI_type_s16) MPI_datatype_finalizer)))
-    newty))
-
-  
-(define (MPI:type-u16)
-  (let ((newty (MPI_copy_datatype (MPI_type_u16) MPI_datatype_finalizer)))
-    newty))
-
-  
-(define (MPI:type-s32)
-  (let ((newty (MPI_copy_datatype (MPI_type_s32) MPI_datatype_finalizer)))
-    newty))
-
-  
-(define (MPI:type-u32)
-  (let ((newty (MPI_copy_datatype (MPI_type_u32) MPI_datatype_finalizer)))
-    newty))
-
-  
-(define (MPI:type-f32)
-  (let ((newty (MPI_copy_datatype (MPI_type_f32) MPI_datatype_finalizer)))
-    newty))
-
-  
-(define (MPI:type-f64)
-  (let ((newty (MPI_copy_datatype (MPI_type_f64) MPI_datatype_finalizer)))
-    newty))
-  
-
-(define (MPI:type-byte)
-  (let ((newty (MPI_copy_datatype (MPI_type_byte) MPI_datatype_finalizer)))
-    newty))
-
-  
