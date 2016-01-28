@@ -160,11 +160,13 @@
 
 (MPI:init)
 
-(print "Host " (get-host-name))
 
 (define comm-world  (MPI:get-comm-world))
 (define size        (MPI:comm-size comm-world))
 (define myrank      (MPI:comm-rank comm-world))
+
+(printf "rank ~A: Host ~A size ~A~%" myrank (get-host-name) size)
+
 (define vsize       3)
 (define intdata     (list-tabulate size (lambda (i) (* 10 i))))
 (define flodata     (list-tabulate size (lambda (i) (* 0.1 i))))
@@ -237,7 +239,6 @@
   
   ;; Barrier
   (MPI:barrier comm-world)
-
    (let ((test-send-recv
 	  (lambda (sendfun recvfun transf data)
 	   (if (zero? myrank)
@@ -335,6 +336,7 @@
 		 (equal? res (vrange data (* myrank vsize) (+ vsize (* myrank vsize))))))
 	     (MPI:barrier comm-world))))
      (test-scatter MPI:scatter-bytevector blob-range (string->blob (string-concatenate vsdata)))
+
      (let ((srfi4-test-scatter
  	    (lambda (scatter vrange list->vector data)
  	      (test-scatter scatter vrange (list->vector (concatenate data))))))
@@ -346,7 +348,8 @@
         (srfi4-test-scatter MPI:scatter-u32vector u32vector-range list->u32vector vintdata)
         (srfi4-test-scatter MPI:scatter-f32vector f32vector-range list->f32vector vflodata)
         (srfi4-test-scatter MPI:scatter-f64vector f64vector-range list->f64vector vflodata)))
-      
+
+
  ;;  Scatterv
    (let* ((test-scatterv
 	   (lambda (scatterv data)
@@ -595,32 +598,34 @@
 		     (print rank-in-c "[" myrank "]: received " n ", resending " n1)
 		     (MPI:send n1 (modulo (+ 1 rank-in-c) size-of-c) 0 c))))
 	     (MPI:barrier comm-world)))))
-    (let ((c (MPI:comm-split comm-world (modulo myrank 2) 0)))
+    (let* ((color (if (< size 4) 0 (modulo myrank 2)))
+	   (c (MPI:comm-split comm-world color 0)))
       (if (zero? (modulo myrank 2))
 	  (send-in-comm c (string->blob "aa") "a")
 	  (send-in-comm c (string->blob "bb") "b"))))
 
   ;; Cartesian topology
-   (let ((cart (MPI:make-cart comm-world (u32vector 2 2) (u32vector 0 0) #t))
-	(test-dims-create 
-	 (lambda (n hints)
-	   (print "make-dims " n " " hints " = " (MPI:make-dims n hints)))))
-    (if (zero? myrank)
-	(begin
-	  (print "ranks = " (map (lambda (x) (cons x (MPI:cart-rank cart x)))
-				 (list
-				  (u32vector 0 0) (u32vector 1 0)
-				  (u32vector 1 0) (u32vector 1 1))))
-	  (print "coords = " (list-tabulate (MPI:comm-size cart)
-					    (lambda (n) (cons n (MPI:cart-coords cart n)))))
-	  (test-dims-create 60 (u32vector 0 0 0))
-	  (test-dims-create 60 (u32vector 3 0 0))
-	  (test-dims-create 60 (u32vector 0 4 0))
-	  (test-dims-create 60 (u32vector 3 0 5))
-	  )))
+   (if (>= size 4)
+       (let ((cart (MPI:make-cart comm-world (u32vector 2 2) (u32vector 0 0) #t))
+             (test-dims-create 
+              (lambda (n hints)
+                (print "make-dims " n " " hints " = " (MPI:make-dims n hints)))))
+         (if (zero? myrank)
+             (begin
+               (print "ranks = " (map (lambda (x) (cons x (MPI:cart-rank cart x)))
+                                      (list
+                                       (u32vector 0 0) (u32vector 1 0)
+                                       (u32vector 1 0) (u32vector 1 1))))
+               (print "coords = " (list-tabulate (MPI:comm-size cart)
+                                                 (lambda (n) (cons n (MPI:cart-coords cart n)))))
+               (test-dims-create 60 (u32vector 0 0 0))
+               (test-dims-create 60 (u32vector 3 0 0))
+               (test-dims-create 60 (u32vector 0 4 0))
+               (test-dims-create 60 (u32vector 3 0 5))
+               ))
+         ))
 
   (MPI:barrier comm-world)
-
   ;;   Wtime
   (print myrank ": wtime is "  (MPI:wtime))
 
