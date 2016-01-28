@@ -587,7 +587,7 @@
 	     (if (zero? rank-in-c)
 		 (begin
 		   (print rank-in-c "[" myrank "]: sending " init)
-		   (MPI:send-bytevectir init 1 0 c)
+		   (MPI:send-bytevector init 1 0 c)
 		   (let ((n (MPI:receive MPI:any-source MPI:any-tag c)))
 		     (print rank-in-c "[" myrank "]: received " n)))
 		 (let ((n (MPI:receive MPI:any-source MPI:any-tag c)))
