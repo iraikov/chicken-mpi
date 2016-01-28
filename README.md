@@ -18,7 +18,7 @@ The Chicken MPI egg provides a Scheme interface to a large subset of
 the MPI 1.2 procedures for communication.  It is based on the Ocaml
 MPI library by Xavier Leroy
 (http://pauillac.inria.fr/~xleroy/software.html#ocamlmpi). The mpi
-library has been tested with Open MPI versions 1.2.4 - 1.6.5.
+library has been tested with Open MPI versions 1.2.4 - 1.10.1.
 
 ### Initialization and time procedures
 
