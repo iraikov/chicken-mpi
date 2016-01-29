@@ -4,7 +4,7 @@
 ;;
 ;; Based on the Caml/MPI interface by Xavier Leroy.
 ;;
-;; Copyright 2007-2015 Ivan Raikov.
+;; Copyright 2007-2016 Ivan Raikov.
 ;;
 ;; This program is free software: you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -325,6 +325,7 @@
        (srfi4-test-broadcast MPI:broadcast-f32vector list->f32vector flodata)
        (srfi4-test-broadcast MPI:broadcast-f64vector list->f64vector flodata)))
 
+   (MPI:barrier comm-world)
   ;; Scatter
    (let* ((test-scatter
 	   (lambda (scatter vrange data)
@@ -336,7 +337,6 @@
 		 (equal? res (vrange data (* myrank vsize) (+ vsize (* myrank vsize))))))
 	     (MPI:barrier comm-world))))
      (test-scatter MPI:scatter-bytevector blob-range (string->blob (string-concatenate vsdata)))
-
      (let ((srfi4-test-scatter
  	    (lambda (scatter vrange list->vector data)
  	      (test-scatter scatter vrange (list->vector (concatenate data))))))
@@ -347,8 +347,8 @@
         (srfi4-test-scatter MPI:scatter-s32vector s32vector-range list->s32vector vintdata)
         (srfi4-test-scatter MPI:scatter-u32vector u32vector-range list->u32vector vintdata)
         (srfi4-test-scatter MPI:scatter-f32vector f32vector-range list->f32vector vflodata)
-        (srfi4-test-scatter MPI:scatter-f64vector f64vector-range list->f64vector vflodata)))
-
+        (srfi4-test-scatter MPI:scatter-f64vector f64vector-range list->f64vector vflodata))
+     )
 
  ;;  Scatterv
    (let* ((test-scatterv
@@ -370,8 +370,8 @@
        (srfi4-test-scatterv MPI:scatterv-s32vector  list->s32vector vvintdata)
        (srfi4-test-scatterv MPI:scatterv-u32vector  list->u32vector vvintdata)
        (srfi4-test-scatterv MPI:scatterv-f32vector  list->f32vector vvflodata)
-       (srfi4-test-scatterv MPI:scatterv-f64vector  list->f64vector vvflodata)))
-
+       (srfi4-test-scatterv MPI:scatterv-f64vector  list->f64vector vvflodata))
+     )
   ;; Gather
    (let* ((test-gather
 	   (lambda (gather data total)

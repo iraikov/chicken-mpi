@@ -420,7 +420,7 @@ static void MPI_counts_displs(int size,
 
   if (data == C_SCHEME_UNDEFINED)
   {
-    MPI_Scatter(NULL, 0, MPI_DATATYPE_NULL, &n, 1, MPI_INT, root, Comm_val(comm));
+    MPI_Scatter(NULL, 1, MPI_INT, &n, 1, MPI_INT, root, Comm_val(comm));
   }
   else
   {
@@ -449,7 +449,7 @@ END
 
   if (data == C_SCHEME_UNDEFINED)
   {
-    MPI_Scatter(NULL, 0, MPI_DATATYPE_NULL, &n, 1, MPI_DOUBLE, root, Comm_val(comm));
+    MPI_Scatter(NULL, 1, MPI_DOUBLE, &n, 1, MPI_DOUBLE, root, Comm_val(comm));
   }
   else
   {
@@ -470,7 +470,7 @@ END
 
 C_word MPI_scatter_bytevector (C_word data, C_word sendcount, C_word recv, C_word root, C_word comm)
 {
-  unsigned char *vect, *vrecv; int  vroot, rlen, slen;
+  unsigned char *vect, *vrecv; int  vroot, rlen, slen, status, vectlen;
   C_word result; C_word *ptr;
 
   MPI_check_comm(comm);
@@ -482,14 +482,15 @@ C_word MPI_scatter_bytevector (C_word data, C_word sendcount, C_word recv, C_wor
 
   if (data == C_SCHEME_UNDEFINED)
   {
-    MPI_Scatter(NULL, 0, MPI_DATATYPE_NULL, vrecv, rlen, MPI_BYTE, vroot, Comm_val(comm));
+    status = MPI_Scatter(NULL, rlen, MPI_BYTE, vrecv, rlen, MPI_BYTE, vroot, Comm_val(comm));
   }
   else
   {
     C_i_check_bytevector (data);
     vect  = C_c_bytevector(data);
+    vectlen   = C_bytevector_length(data);
     slen  = (int)C_num_to_int (sendcount);
-    MPI_Scatter(vect, slen, MPI_BYTE, vrecv, rlen, MPI_BYTE, vroot, Comm_val(comm));
+    status = MPI_Scatter(vect, slen, MPI_BYTE, vrecv, rlen, MPI_BYTE, vroot, Comm_val(comm));
   }
 
   C_return (recv);
@@ -510,7 +511,7 @@ C_word MPI_scatter_u8vector (C_word data, C_word sendcount, C_word recv, C_word 
 
   if (data == C_SCHEME_UNDEFINED)
   {
-    MPI_Scatter(NULL, 0, MPI_DATATYPE_NULL, vrecv, rlen, MPI_UNSIGNED_CHAR, vroot, Comm_val(comm));
+    MPI_Scatter(NULL, rlen, MPI_UNSIGNED_CHAR, vrecv, rlen, MPI_UNSIGNED_CHAR, vroot, Comm_val(comm));
   }
   else
   {
@@ -536,7 +537,7 @@ C_word MPI_scatter_s8vector (C_word data, C_word sendcount, C_word recv, C_word 
 
   if (data == C_SCHEME_UNDEFINED)
   {
-    MPI_Scatter(NULL, 0, MPI_DATATYPE_NULL, vrecv, rlen, MPI_SIGNED_CHAR, vroot, Comm_val(comm));
+    MPI_Scatter(NULL, rlen, MPI_SIGNED_CHAR, vrecv, rlen, MPI_SIGNED_CHAR, vroot, Comm_val(comm));
   }
   else
   {
@@ -563,7 +564,7 @@ C_word MPI_scatter_u16vector (C_word data, C_word sendcount, C_word recv, C_word
 
   if (data == C_SCHEME_UNDEFINED)
   {
-    MPI_Scatter(NULL, 0, MPI_DATATYPE_NULL, vrecv, rlen, MPI_UNSIGNED_SHORT, vroot, Comm_val(comm));
+    MPI_Scatter(NULL, rlen, MPI_UNSIGNED_SHORT, vrecv, rlen, MPI_UNSIGNED_SHORT, vroot, Comm_val(comm));
   }
   else
   {
@@ -589,7 +590,7 @@ C_word MPI_scatter_s16vector (C_word data, C_word sendcount, C_word recv, C_word
 
   if (data == C_SCHEME_UNDEFINED)
   {
-    MPI_Scatter(NULL, 0, MPI_DATATYPE_NULL, vrecv, rlen, MPI_SHORT, vroot, Comm_val(comm));
+    MPI_Scatter(NULL, rlen, MPI_SHORT, vrecv, rlen, MPI_SHORT, vroot, Comm_val(comm));
   }
   else
   {
@@ -616,7 +617,7 @@ C_word MPI_scatter_u32vector (C_word data, C_word sendcount, C_word recv, C_word
 
   if (data == C_SCHEME_UNDEFINED)
   {
-    MPI_Scatter(NULL, 0, MPI_DATATYPE_NULL, vrecv, rlen, MPI_UNSIGNED, vroot, Comm_val(comm));
+    MPI_Scatter(NULL, rlen, MPI_UNSIGNED, vrecv, rlen, MPI_UNSIGNED, vroot, Comm_val(comm));
   }
   else
   {
@@ -642,7 +643,7 @@ C_word MPI_scatter_s32vector (C_word data, C_word sendcount, C_word recv, C_word
 
   if (data == C_SCHEME_UNDEFINED)
   {
-    MPI_Scatter(NULL, 0, MPI_DATATYPE_NULL, vrecv, rlen, MPI_INT, vroot, Comm_val(comm));
+    MPI_Scatter(NULL, rlen, MPI_INT, vrecv, rlen, MPI_INT, vroot, Comm_val(comm));
   }
   else
   {
@@ -669,7 +670,7 @@ C_word MPI_scatter_f32vector (C_word data, C_word sendcount, C_word recv, C_word
 
   if (data == C_SCHEME_UNDEFINED)
   {
-    MPI_Scatter(NULL, 0, MPI_DATATYPE_NULL, vrecv, rlen, MPI_FLOAT, vroot, Comm_val(comm));
+    MPI_Scatter(NULL, rlen, MPI_FLOAT, vrecv, rlen, MPI_FLOAT, vroot, Comm_val(comm));
   }
   else
   {
@@ -696,7 +697,7 @@ C_word MPI_scatter_f64vector (C_word data, C_word sendcount, C_word recv, C_word
 
   if (data == C_SCHEME_UNDEFINED)
   {
-    MPI_Scatter(NULL, 0, MPI_DATATYPE_NULL, vrecv, rlen, MPI_DOUBLE, vroot, Comm_val(comm));
+    MPI_Scatter(NULL, rlen, MPI_DOUBLE, vrecv, rlen, MPI_DOUBLE, vroot, Comm_val(comm));
   }
   else
   {
@@ -723,7 +724,7 @@ C_word MPI_scatterv_bytevector (C_word sendbuf, C_word sendlengths,
 
   if (sendbuf == C_SCHEME_UNDEFINED)
   {
-     MPI_Scatterv(NULL, NULL, NULL, MPI_DATATYPE_NULL,
+     MPI_Scatterv(NULL, NULL, NULL, MPI_BYTE,
                   C_c_bytevector(recvbuf), C_bytevector_length(recvbuf), MPI_BYTE,
                   vroot, Comm_val(comm));
   }
@@ -760,8 +761,8 @@ C_word MPI_scatterv_u8vector (C_word sendbuf, C_word sendlengths,
 
   if (sendbuf == C_SCHEME_UNDEFINED)
   {
-     MPI_Scatterv(NULL, NULL, NULL, MPI_DATATYPE_NULL,
-                  C_c_u8vector(recvbuf), C_8vector_length(recvbuf), MPI_SIGNED_CHAR,
+     MPI_Scatterv(NULL, NULL, NULL, MPI_UNSIGNED_CHAR,
+                  C_c_u8vector(recvbuf), C_8vector_length(recvbuf), MPI_UNSIGNED_CHAR,
                   vroot, Comm_val(comm));
   }
   else
@@ -793,7 +794,7 @@ C_word MPI_scatterv_s8vector (C_word sendbuf, C_word sendlengths,
 
   if (sendbuf == C_SCHEME_UNDEFINED)
   {
-     MPI_Scatterv(NULL, NULL, NULL, MPI_DATATYPE_NULL,
+     MPI_Scatterv(NULL, NULL, NULL, MPI_SIGNED_CHAR,
                   C_c_s8vector(recvbuf), C_8vector_length(recvbuf), MPI_SIGNED_CHAR,
                   vroot, Comm_val(comm));
   }
@@ -828,7 +829,7 @@ C_word MPI_scatterv_u16vector (C_word sendbuf, C_word sendlengths,
 
   if (sendbuf == C_SCHEME_UNDEFINED)
   {
-     MPI_Scatterv(NULL, NULL, NULL, MPI_DATATYPE_NULL,
+     MPI_Scatterv(NULL, NULL, NULL, MPI_UNSIGNED_SHORT,
                   C_c_u16vector(recvbuf), C_16vector_length(recvbuf), MPI_UNSIGNED_SHORT,
                   vroot, Comm_val(comm));
   }
@@ -861,7 +862,7 @@ C_word MPI_scatterv_s16vector (C_word sendbuf, C_word sendlengths,
 
   if (sendbuf == C_SCHEME_UNDEFINED)
   {
-     MPI_Scatterv(NULL, NULL, NULL, MPI_DATATYPE_NULL,
+     MPI_Scatterv(NULL, NULL, NULL, MPI_SHORT,
                   C_c_s16vector(recvbuf), C_16vector_length(recvbuf), MPI_SHORT,
                   vroot, Comm_val(comm));
   }
@@ -896,7 +897,7 @@ C_word MPI_scatterv_u32vector (C_word sendbuf, C_word sendlengths,
 
   if (sendbuf == C_SCHEME_UNDEFINED)
   {
-     MPI_Scatterv(NULL, NULL, NULL, MPI_DATATYPE_NULL,
+     MPI_Scatterv(NULL, NULL, NULL, MPI_UNSIGNED,
                   C_c_u32vector(recvbuf), C_32vector_length(recvbuf), MPI_UNSIGNED,
                   vroot, Comm_val(comm));
   }
@@ -929,7 +930,7 @@ C_word MPI_scatterv_s32vector (C_word sendbuf, C_word sendlengths,
 
   if (sendbuf == C_SCHEME_UNDEFINED)
   {
-     MPI_Scatterv(NULL, NULL, NULL, MPI_DATATYPE_NULL,
+     MPI_Scatterv(NULL, NULL, NULL, MPI_INT,
                   C_c_s32vector(recvbuf), C_32vector_length(recvbuf), MPI_INT,
                   vroot, Comm_val(comm));
   }
@@ -963,7 +964,7 @@ C_word MPI_scatterv_f32vector (C_word sendbuf, C_word sendlengths,
 
   if (sendbuf == C_SCHEME_UNDEFINED)
   {
-     MPI_Scatterv(NULL, NULL, NULL, MPI_DATATYPE_NULL,
+     MPI_Scatterv(NULL, NULL, NULL, MPI_FLOAT,
                   C_c_f32vector(recvbuf), C_32vector_length(recvbuf), MPI_FLOAT,
                   vroot, Comm_val(comm));
   }
@@ -996,7 +997,7 @@ C_word MPI_scatterv_f64vector (C_word sendbuf, C_word sendlengths,
 
   if (sendbuf == C_SCHEME_UNDEFINED)
   {
-     MPI_Scatterv(NULL, NULL, NULL, MPI_DATATYPE_NULL,
+     MPI_Scatterv(NULL, NULL, NULL, MPI_DOUBLE,
                   C_c_f64vector(recvbuf), C_64vector_length(recvbuf), MPI_DOUBLE,
                   vroot, Comm_val(comm));
   }
@@ -1054,10 +1055,10 @@ C_word MPI_scatterv_f64vector (C_word sendbuf, C_word sendlengths,
 	  ;; If this is the root process, scatter the data
 	  (if (<= (* nprocs sendcount) (obj-len v))
 	      (let ((recv (make-obj sendcount)))
-		(scatter v sendcount recv root comm))
+		(scatter (object-evict v) sendcount recv root comm))
 	      (error 'MPI:scatter "send data length is less than n * sendcount"))
 	  ;; Other processes allocate a buffer and receive the data
-	  (let ((recv  (make-obj sendcount)))
+	  (let ((recv (make-obj sendcount)))
 	    (scatter (void) sendcount recv root comm))))))
 
 (define (MPI:scatter-int data root comm)
@@ -1214,7 +1215,7 @@ C_word MPI_scatterv_f64vector (C_word sendbuf, C_word sendlengths,
 
   if (recv == C_SCHEME_UNDEFINED)
   {
-    MPI_Gather(&send, 1, MPI_INT, NULL, 0, MPI_DATATYPE_NULL, root, Comm_val(comm));
+    MPI_Gather(&send, 1, MPI_INT, NULL, 1, MPI_INT, root, Comm_val(comm));
     result = C_SCHEME_UNDEFINED;
   }
   else
@@ -1243,7 +1244,7 @@ END
 
   if (recv == C_SCHEME_UNDEFINED)
   {
-    MPI_Gather(&send, 1, MPI_DOUBLE, NULL, 0, MPI_DATATYPE_NULL, root, Comm_val(comm));
+    MPI_Gather(&send, 1, MPI_DOUBLE, NULL, 1, MPI_DOUBLE, root, Comm_val(comm));
     result = C_SCHEME_UNDEFINED;
   }
   else
@@ -1276,7 +1277,7 @@ C_word MPI_gather_bytevector (C_word send, C_word sendcount, C_word recv, C_word
 
   if (recv == C_SCHEME_UNDEFINED)
   {
-    MPI_Gather(vsend, slen, MPI_BYTE, NULL, 0, MPI_DATATYPE_NULL, vroot, Comm_val(comm));
+    MPI_Gather(vsend, slen, MPI_BYTE, NULL, slen, MPI_BYTE, vroot, Comm_val(comm));
     result = C_SCHEME_UNDEFINED;
   }
   else
@@ -1308,7 +1309,7 @@ C_word MPI_gather_u8vector (C_word send, C_word sendcount, C_word recv, C_word r
 
   if (recv == C_SCHEME_UNDEFINED)
   {
-    MPI_Gather(vsend, slen, MPI_UNSIGNED_CHAR, NULL, 0, MPI_DATATYPE_NULL, vroot, Comm_val(comm));
+    MPI_Gather(vsend, slen, MPI_UNSIGNED_CHAR, NULL, slen, MPI_UNSIGNED_CHAR, vroot, Comm_val(comm));
     result = C_SCHEME_UNDEFINED;
   }
   else
@@ -1337,7 +1338,7 @@ C_word MPI_gather_s8vector (C_word send, C_word sendcount, C_word recv, C_word r
 
   if (recv == C_SCHEME_UNDEFINED)
   {
-    MPI_Gather(vsend, slen, MPI_SIGNED_CHAR, NULL, 0, MPI_DATATYPE_NULL, vroot, Comm_val(comm));
+    MPI_Gather(vsend, slen, MPI_SIGNED_CHAR, NULL, slen, MPI_SIGNED_CHAR, vroot, Comm_val(comm));
     result = C_SCHEME_UNDEFINED;
   }
   else
@@ -1366,7 +1367,7 @@ C_word MPI_gather_u16vector (C_word send, C_word sendcount, C_word recv, C_word 
 
   if (recv == C_SCHEME_UNDEFINED)
   {
-    MPI_Gather(vsend, slen, MPI_UNSIGNED_SHORT, NULL, 0, MPI_DATATYPE_NULL, vroot, Comm_val(comm));
+    MPI_Gather(vsend, slen, MPI_UNSIGNED_SHORT, NULL, slen, MPI_UNSIGNED_SHORT, vroot, Comm_val(comm));
     result = C_SCHEME_UNDEFINED;
   }
   else
@@ -1394,7 +1395,7 @@ C_word MPI_gather_s16vector (C_word send, C_word sendcount, C_word recv, C_word 
 
   if (recv == C_SCHEME_UNDEFINED)
   {
-    MPI_Gather(vsend, slen, MPI_SHORT, NULL, 0, MPI_DATATYPE_NULL, vroot, Comm_val(comm));
+    MPI_Gather(vsend, slen, MPI_SHORT, NULL, slen, MPI_SHORT, vroot, Comm_val(comm));
     result = C_SCHEME_UNDEFINED;
   }
   else
@@ -1423,7 +1424,7 @@ C_word MPI_gather_u32vector (C_word send, C_word sendcount, C_word recv, C_word 
 
   if (recv == C_SCHEME_UNDEFINED)
   {
-    MPI_Gather(vsend, slen, MPI_UNSIGNED, NULL, 0, MPI_DATATYPE_NULL, vroot, Comm_val(comm));
+    MPI_Gather(vsend, slen, MPI_UNSIGNED, NULL, slen, MPI_UNSIGNED, vroot, Comm_val(comm));
     result = C_SCHEME_UNDEFINED;
   }
   else
@@ -1452,7 +1453,7 @@ C_word MPI_gather_s32vector (C_word send, C_word sendcount, C_word recv, C_word 
 
   if (recv == C_SCHEME_UNDEFINED)
   {
-    MPI_Gather(vsend, slen, MPI_INT, NULL, 0, MPI_DATATYPE_NULL, vroot, Comm_val(comm));
+    MPI_Gather(vsend, slen, MPI_INT, NULL, slen, MPI_INT, vroot, Comm_val(comm));
     result = C_SCHEME_UNDEFINED;
   }
   else
@@ -1481,7 +1482,7 @@ C_word MPI_gather_f32vector (C_word send, C_word sendcount, C_word recv, C_word 
 
   if (recv == C_SCHEME_UNDEFINED)
   {
-    MPI_Gather(vsend, slen, MPI_FLOAT, NULL, 0, MPI_DATATYPE_NULL, vroot, Comm_val(comm));
+    MPI_Gather(vsend, slen, MPI_FLOAT, NULL, slen, MPI_FLOAT, vroot, Comm_val(comm));
     result = C_SCHEME_UNDEFINED;
   }
   else
@@ -1510,7 +1511,7 @@ C_word MPI_gather_f64vector (C_word send, C_word sendcount, C_word recv, C_word 
 
   if (recv == C_SCHEME_UNDEFINED)
   {
-    MPI_Gather(vsend, slen, MPI_DOUBLE, NULL, 0, MPI_DATATYPE_NULL, vroot, Comm_val(comm));
+    MPI_Gather(vsend, slen, MPI_DOUBLE, NULL, slen, MPI_DOUBLE, vroot, Comm_val(comm));
     result = C_SCHEME_UNDEFINED;
   }
   else
@@ -1540,7 +1541,7 @@ C_word MPI_gatherv_bytevector (C_word sendbuf, C_word recvbuf, C_word recvlength
   if (recvbuf == C_SCHEME_UNDEFINED)
   {
      MPI_Gatherv (C_c_bytevector(sendbuf), C_bytevector_length(sendbuf), MPI_BYTE,
-                  NULL, NULL, NULL, MPI_DATATYPE_NULL,
+                  NULL, NULL, NULL, MPI_BYTE,
                   vroot, Comm_val(comm));
   }
   else
@@ -1576,7 +1577,7 @@ C_word MPI_gatherv_u8vector (C_word sendbuf, C_word recvbuf, C_word recvlengths,
   if (recvbuf == C_SCHEME_UNDEFINED)
   {
      MPI_Gatherv (C_c_u8vector(sendbuf), C_8vector_length(sendbuf), MPI_UNSIGNED_CHAR,
-                  NULL, NULL, NULL, MPI_DATATYPE_NULL,
+                  NULL, NULL, NULL, MPI_UNSIGNED_CHAR,
                   vroot, Comm_val(comm));
   }
   else
@@ -1609,7 +1610,7 @@ C_word MPI_gatherv_s8vector (C_word sendbuf, C_word recvbuf, C_word recvlengths,
   if (recvbuf == C_SCHEME_UNDEFINED)
   {
      MPI_Gatherv (C_c_s8vector(sendbuf), C_8vector_length(sendbuf), MPI_SIGNED_CHAR,
-                  NULL, NULL, NULL, MPI_DATATYPE_NULL,
+                  NULL, NULL, NULL, MPI_SIGNED_CHAR,
                   vroot, Comm_val(comm));
   }
   else
@@ -1642,7 +1643,7 @@ C_word MPI_gatherv_u16vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
   if (recvbuf == C_SCHEME_UNDEFINED)
   {
      MPI_Gatherv (C_c_u16vector(sendbuf), C_16vector_length(sendbuf), MPI_UNSIGNED_SHORT,
-                  NULL, NULL, NULL, MPI_DATATYPE_NULL,
+                  NULL, NULL, NULL, MPI_UNSIGNED_SHORT,
                   vroot, Comm_val(comm));
   }
   else
@@ -1675,7 +1676,7 @@ C_word MPI_gatherv_s16vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
   if (recvbuf == C_SCHEME_UNDEFINED)
   {
      MPI_Gatherv (C_c_s16vector(sendbuf), C_16vector_length(sendbuf), MPI_SHORT,
-                  NULL, NULL, NULL, MPI_DATATYPE_NULL,
+                  NULL, NULL, NULL, MPI_SHORT,
                   vroot, Comm_val(comm));
   }
   else
@@ -1709,8 +1710,7 @@ C_word MPI_gatherv_u32vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
   if (recvbuf == C_SCHEME_UNDEFINED)
   {
      MPI_Gatherv (C_c_u32vector(sendbuf), C_32vector_length(sendbuf), MPI_UNSIGNED,
-                  NULL, NULL, NULL, MPI_DATATYPE_NULL,
-                  vroot, Comm_val(comm));
+                  NULL, NULL, NULL, MPI_UNSIGNED, vroot, Comm_val(comm));
   }
   else
   {
@@ -1742,7 +1742,7 @@ C_word MPI_gatherv_s32vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
   if (recvbuf == C_SCHEME_UNDEFINED)
   {
      MPI_Gatherv (C_c_s32vector(sendbuf), C_32vector_length(sendbuf), MPI_INT,
-                  NULL, NULL, NULL, MPI_DATATYPE_NULL,
+                  NULL, NULL, NULL, MPI_INT,
                   vroot, Comm_val(comm));
   }
   else
@@ -1776,8 +1776,7 @@ C_word MPI_gatherv_f32vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
   if (recvbuf == C_SCHEME_UNDEFINED)
   {
      MPI_Gatherv (C_c_f32vector(sendbuf), C_32vector_length(sendbuf), MPI_FLOAT,
-                  NULL, NULL, NULL, MPI_DATATYPE_NULL,
-                  vroot, Comm_val(comm));
+                  NULL, NULL, NULL, MPI_FLOAT, vroot, Comm_val(comm));
   }
   else
   {
@@ -1810,8 +1809,7 @@ C_word MPI_gatherv_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
   if (recvbuf == C_SCHEME_UNDEFINED)
   {
      MPI_Gatherv (C_c_f64vector(sendbuf), C_64vector_length(sendbuf), MPI_DOUBLE,
-                  NULL, NULL, NULL, MPI_DATATYPE_NULL,
-                  vroot, Comm_val(comm));
+                  NULL, NULL, NULL, MPI_DOUBLE, vroot, Comm_val(comm));
   }
   else
   {
