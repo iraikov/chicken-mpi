@@ -1055,7 +1055,7 @@ C_word MPI_scatterv_f64vector (C_word sendbuf, C_word sendlengths,
 	  ;; If this is the root process, scatter the data
 	  (if (<= (* nprocs sendcount) (obj-len v))
 	      (let ((recv (make-obj sendcount)))
-		(scatter (object-evict v) sendcount recv root comm))
+		(scatter v sendcount recv root comm))
 	      (error 'MPI:scatter "send data length is less than n * sendcount"))
 	  ;; Other processes allocate a buffer and receive the data
 	  (let ((recv (make-obj sendcount)))
