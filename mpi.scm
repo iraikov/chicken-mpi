@@ -210,7 +210,7 @@
   MPI-rr-fold MPI-rr-foldi MPI-rr-map MPI-rr-for-each
   )
 		   
- (import scheme chicken foreign srfi-1 srfi-4 data-structures lolevel)
+ (import scheme chicken foreign srfi-1 srfi-4 data-structures)
 
 #>
 #include "chicken-mpi.h"
