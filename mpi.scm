@@ -24,6 +24,7 @@
 (module mpi
 
  (MPI:barrier
+
   MPI:broadcast-int 
   MPI:scatter-int 
   MPI:gather-int 
@@ -33,6 +34,13 @@
   MPI:gather-flonum 
   MPI:allgather-flonum
   MPI:broadcast-fixnum 
+  
+  MPI:broadcast
+  MPI:scatter 
+  MPI:scatterv
+  MPI:gather 
+  MPI:gatherv 
+  MPI:allgather
   
   MPI:broadcast-bytevector
   MPI:scatter-bytevector 
@@ -200,6 +208,8 @@
   MPI:probe 
   MPI:receive 
   MPI:receive-with-status 
+  MPI:receive-bytevector 
+  MPI:receive-bytevector-with-status 
   MPI:receive-flonum 
   MPI:receive-fixnum
   MPI:receive-int
@@ -211,7 +221,7 @@
   MPI:receive-s32vector
   MPI:receive-f32vector
   MPI:receive-f64vector
-  MPI:receive-bytevector
+
   MPI:any-tag
   MPI:any-source
   

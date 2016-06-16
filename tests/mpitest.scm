@@ -4,7 +4,7 @@
 ;;
 ;; Based on the Caml/MPI interface by Xavier Leroy.
 ;;
-;; Copyright 2007-2015 Ivan Raikov.
+;; Copyright 2007-2016 Ivan Raikov.
 ;;
 ;; This program is free software: you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -186,10 +186,10 @@
       (let ((data  "aa"))
 	(print myrank ": sending " data)
 	(MPI:send-bytevector (string->blob data) 1 0 comm-world)
-	(let ((n (blob->string (MPI:receive MPI:any-source MPI:any-tag comm-world))))
+	(let ((n (blob->string (MPI:receive-bytevector MPI:any-source MPI:any-tag comm-world))))
 	  (print myrank ": received " n)
 	  (test-assert (check-string myrank n #\a size))))
-      (let* ((n   (blob->string (MPI:receive MPI:any-source MPI:any-tag comm-world)))
+      (let* ((n   (blob->string (MPI:receive-bytevector MPI:any-source MPI:any-tag comm-world)))
 	     (n1  (string-append n "a")))
 	(print myrank ": received " n ", resending " n1)
 	(MPI:send-bytevector (string->blob n1) (modulo (+ myrank 1) size) 0 comm-world)

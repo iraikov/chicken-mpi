@@ -259,7 +259,7 @@ void MPI_send_data (C_word ty, int count, C_word data, C_word dest, C_word tag, 
   (MPI_send_bytevector blob dest tag comm))
   
 (define (MPI:send ty count x dest tag comm)
-  (MPI:send-data ty count x dest tag comm))
+  (MPI_send_data ty count x dest tag comm))
 
 
 ;; Probe for pending messages and determine length 
@@ -556,16 +556,14 @@ C_word MPI_receive_data (C_word ty, int count, C_word data, C_word source, C_wor
 (define MPI_receive_bytevector (foreign-lambda scheme-object "MPI_receive_bytevector" 
 					       scheme-object scheme-object scheme-object scheme-object ))
 
-(define MPI_receive_data (foreign-lambda scheme-object "MPI_receive_bytevector" 
-                                         scheme-object int scheme-object scheme-object scheme-object ))
+(define MPI_receive_data (foreign-lambda scheme-object "MPI_receive_data" 
+                                         scheme-object int scheme-object scheme-object scheme-object scheme-object ))
 
 (define (make-receive makev recv)
   (lambda (len source tag comm)
     (let ((buffer (makev len)))
       (recv buffer source tag comm))))
 
-
-(define MPI:receive-bytevector (make-receive make-blob MPI_receive_bytevector))
 
 (define-syntax define-srfi4-receive
   (lambda (x r c)
@@ -586,16 +584,25 @@ C_word MPI_receive_data (C_word ty, int count, C_word data, C_word source, C_wor
 (define-srfi4-receive f64)
 
 
+(define MPI:receive-bytevector (make-receive make-blob MPI_receive_bytevector))
+
+(define (MPI:receive-bytevector-with-status ty source tag comm)
+  (let-values (((count actual-source actual-tag) (MPI:probe MPI:type-byte source tag comm)))
+    (let ((buffer (make-blob count)))
+      (let ((v (MPI_receive_bytevector buffer source tag comm)))
+        (values v actual-source actual-tag)))
+    ))
+
 (define (MPI:receive ty source tag comm)
   (let-values (((count actual-source actual-tag) (MPI:probe ty source tag comm)))
     (let ((buffer (make-blob (* count (MPI:type-size ty)))))
-      (MPI:receive-data ty count buffer actual-source actual-tag comm))
+      (MPI_receive_data ty count buffer actual-source actual-tag comm))
     ))
 
 (define (MPI:receive-with-status ty source tag comm)
   (let-values (((count actual-source actual-tag) (MPI:probe ty source tag comm)))
     (let ((buffer (make-blob (* count (MPI:type-size ty)))))
-      (let ((v (MPI:receive-data ty count buffer source tag comm)))
+      (let ((v (MPI_receive_data ty count buffer source tag comm)))
         (values v actual-source actual-tag)))
     ))
 
