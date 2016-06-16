@@ -1429,7 +1429,7 @@ END
 
 C_word MPI_gather_bytevector (C_word send, C_word sendcount, C_word recv, C_word root, C_word comm)
 {
-  unsigned char *vrecv, *vsend; int  vroot, rlen, slen;
+  unsigned char *vrecv, *vsend; int  vroot, slen;
   C_word result; C_word *ptr;
 
   MPI_check_comm(comm);
@@ -1448,9 +1448,8 @@ C_word MPI_gather_bytevector (C_word send, C_word sendcount, C_word recv, C_word
   {
     C_i_check_bytevector (recv);
     vrecv  = C_c_bytevector(recv);
-    rlen   = C_bytevector_length (recv);
-    
-    MPI_Gather(vsend, slen, MPI_BYTE, vrecv, rlen, MPI_BYTE, vroot, Comm_val(comm));
+
+    MPI_Gather(vsend, slen, MPI_BYTE, vrecv, slen, MPI_BYTE, vroot, Comm_val(comm));
 
     result = recv;
   }
@@ -1461,7 +1460,7 @@ C_word MPI_gather_bytevector (C_word send, C_word sendcount, C_word recv, C_word
 
 C_word MPI_gather_data (C_word ty, C_word send, C_word sendcount, C_word recv, C_word root, C_word comm)
 {
-  unsigned char *vrecv, *vsend; int  vroot, rlen, slen;
+  unsigned char *vrecv, *vsend; int  vroot, slen;
   C_word result; C_word *ptr;
 
   MPI_check_comm(comm);
@@ -1480,9 +1479,8 @@ C_word MPI_gather_data (C_word ty, C_word send, C_word sendcount, C_word recv, C
   {
     C_i_check_bytevector (recv);
     vrecv  = C_c_bytevector(recv);
-    rlen   = C_bytevector_length (recv);
     
-    MPI_Gather(vsend, slen, Datatype_val(ty), vrecv, rlen, Datatype_val(ty), vroot, Comm_val(comm));
+    MPI_Gather(vsend, slen, Datatype_val(ty), vrecv, slen, Datatype_val(ty), vroot, Comm_val(comm));
 
     result = recv;
   }
@@ -2090,11 +2088,12 @@ C_word MPI_gatherv_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
 
 
 (define MPI_gather_bytevector (foreign-lambda scheme-object "MPI_gather_bytevector" 
-					      scheme-object scheme-object scheme-object scheme-object scheme-object ))
+					      scheme-object scheme-object scheme-object 
+                                              scheme-object scheme-object ))
 
 (define MPI_gather_data (foreign-lambda scheme-object "MPI_gather_data" 
-                                        scheme-object scheme-object scheme-object scheme-object 
-                                        scheme-object scheme-object ))
+                                        scheme-object scheme-object scheme-object
+                                        scheme-object scheme-object scheme-object))
 
 
 (define (make-gather make-obj obj-len gather)

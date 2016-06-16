@@ -265,10 +265,6 @@ EOF
         
        MPI_Init(&argc, &argv);
 
-       printf ("before contig\n");
-       status = MPI_Type_Contiguous(15, MPI_LONG, &newty);
-       printf ("contig status = %d\n", status);
-
        for (i = 0; i < argc; i++)
        {  
           s = argv[i];

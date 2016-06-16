@@ -559,10 +559,13 @@ C_word MPI_receive_data (C_word ty, int count, C_word data, C_word source, C_wor
 (define MPI_receive_data (foreign-lambda scheme-object "MPI_receive_data" 
                                          scheme-object int scheme-object scheme-object scheme-object scheme-object ))
 
-(define (make-receive makev recv)
-  (lambda (len source tag comm)
-    (let ((buffer (makev len)))
-      (recv buffer source tag comm))))
+(define (make-receive ty makev recv)
+  (lambda (source tag comm)
+    (let-values (((count actual-source actual-tag) (MPI:probe ty source tag comm)))
+      (let ((buffer (makev count)))
+        (recv buffer source tag comm)
+        ))
+    ))
 
 
 (define-syntax define-srfi4-receive
@@ -571,8 +574,9 @@ C_word MPI_receive_data (C_word ty, int count, C_word data, C_word source, C_wor
 	   (%define (r 'define))
 	   (makev   (string->symbol (string-append "make-" (symbol->string type) "vector")))
 	   (recv    (string->symbol (string-append "MPI_receive_" (symbol->string type) "vector")))
-	   (name    (string->symbol (string-append "MPI:receive-" (symbol->string type) "vector"))))
-       `(,%define ,name (make-receive ,makev ,recv)))))
+	   (name    (string->symbol (string-append "MPI:receive-" (symbol->string type) "vector")))
+	   (ty      (string->symbol (string-append "MPI:type-" (symbol->string type)))))
+       `(,%define ,name (make-receive ,ty ,makev ,recv)))))
 
 (define-srfi4-receive s8)
 (define-srfi4-receive u8)
@@ -584,9 +588,9 @@ C_word MPI_receive_data (C_word ty, int count, C_word data, C_word source, C_wor
 (define-srfi4-receive f64)
 
 
-(define MPI:receive-bytevector (make-receive make-blob MPI_receive_bytevector))
+(define MPI:receive-bytevector (make-receive MPI:type-byte make-blob MPI_receive_bytevector))
 
-(define (MPI:receive-bytevector-with-status ty source tag comm)
+(define (MPI:receive-bytevector-with-status source tag comm)
   (let-values (((count actual-source actual-tag) (MPI:probe MPI:type-byte source tag comm)))
     (let ((buffer (make-blob count)))
       (let ((v (MPI_receive_bytevector buffer source tag comm)))

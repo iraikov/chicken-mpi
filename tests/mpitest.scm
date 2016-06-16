@@ -180,7 +180,7 @@
 (define vvflodata   (list-tabulate size (lambda (i) (list-tabulate (+ i 1) (lambda (j) (+ i (* 0.1 j)))))))
 
 
-(test-group "MPI test"
+(test-group "MPI test 1"
 
   (if (zero? myrank)
       (let ((data  "aa"))
@@ -195,9 +195,11 @@
 	(MPI:send-bytevector (string->blob n1) (modulo (+ myrank 1) size) 0 comm-world)
 	(test-assert (check-string myrank n #\a myrank))
 	))
+)
 
-  ;; Barrier
-  (MPI:barrier comm-world)
+(MPI:barrier comm-world)
+
+(test-group "MPI test 2"
   
   (if (zero? myrank)
       (let ((data1  "aa")
@@ -206,17 +208,17 @@
 	(MPI:send-bytevector (string->blob data1) 1 0 comm-world)
 	(print myrank ": sending (tag 1) " data2)
 	(MPI:send-bytevector (string->blob data2) 1 1 comm-world)
-	(let-values (((n src tag)  (MPI:receive-with-status MPI:any-source MPI:any-tag comm-world)))
+	(let-values (((n src tag)  (MPI:receive-bytevector-with-status MPI:any-source MPI:any-tag comm-world)))
 		    (print myrank ": received " (blob->string n) " (tag " tag ")" " from " src)
 		    (if (zero? tag) 
 			(test-assert (check-string myrank (blob->string n) #\a size))
 			(test-assert (check-string myrank (blob->string n) #\b size)))
-         (let-values (((n src tag)  (MPI:receive-with-status MPI:any-source MPI:any-tag comm-world)))
+         (let-values (((n src tag)  (MPI:receive-bytevector-with-status MPI:any-source MPI:any-tag comm-world)))
 		     (print myrank ": received " (blob->string n) " (tag " tag ")" " from " src)
 		     (if (zero? tag) 
 			 (test-assert (check-string myrank (blob->string n) #\a size))
 			 (test-assert (check-string myrank (blob->string n) #\b size))))))
-      (let-values (((n1 src tag1)  (MPI:receive-with-status MPI:any-source 0 comm-world)))
+      (let-values (((n1 src tag1)  (MPI:receive-bytevector-with-status MPI:any-source 0 comm-world)))
 	  (let* ((n1   (blob->string n1))
 		 (nn1  (if (zero? tag1) (string-append n1 "a") (string-append n1 "b"))))
 	     (print myrank ": received " n1 " (tag " tag1 ")" " from " src
@@ -224,7 +226,7 @@
 	     (if (zero? tag1)
 		 (test-assert (check-string myrank n1 #\a myrank))
 		 (test-assert (check-string myrank n1 #\b myrank)))
-	     (let-values (((n2 src tag2)  (MPI:receive-with-status MPI:any-source MPI:any-tag comm-world)))
+	     (let-values (((n2 src tag2)  (MPI:receive-bytevector-with-status MPI:any-source MPI:any-tag comm-world)))
 			 (let* ((n2   (blob->string n2))
 				(nn2  (if (zero? tag2) (string-append n2 "a") (string-append n2 "b"))))
 			   (if (zero? tag2)
@@ -234,10 +236,12 @@
 				  ", resending " nn2)
 			   (MPI:send-bytevector (string->blob nn1) (modulo (+ 1 myrank) size) tag1 comm-world)
 			   (MPI:send-bytevector (string->blob nn2) (modulo (+ 1 myrank) size) tag2 comm-world))))))
-  
-  ;; Barrier
-  (MPI:barrier comm-world)
+)
 
+;; Barrier
+(MPI:barrier comm-world)
+
+(test-group "MPI test send/recv"
    (let ((test-send-recv
 	  (lambda (sendfun recvfun transf data)
 	   (if (zero? myrank)
@@ -269,7 +273,7 @@
 	   (lambda (len vsend vreceive vmap list->vector)
 	     (lambda (data)
 	       (test-send-recv vsend
-			       (lambda (src tag comm) (vreceive len src tag comm))
+			       (lambda (src tag comm) (vreceive src tag comm))
 			       (lambda (v) (vmap v (lambda (x) (+ 1 x))))
 			       (map list->vector data))))))
       ((srfi4-test-send-recv vsize MPI:send-u8vector MPI:receive-u8vector u8vector-map list->u8vector)
@@ -289,14 +293,19 @@
        ((srfi4-test-send-recv vsize MPI:send-f64vector MPI:receive-f64vector f64vector-map list->f64vector)
         vflodata)
       ))
+)
 
-   (begin
-     (if (positive? myrank)
-	 (sleep myrank))
-     (print myrank ": hitting barrier")
-     (MPI:barrier comm-world)
-     (if (zero? myrank)
-	 (print "jumped barrier")))
+
+(begin
+  (if (positive? myrank)
+      (sleep myrank))
+  (print myrank ": hitting barrier")
+  (MPI:barrier comm-world)
+  (if (zero? myrank)
+      (print "jumped barrier")))
+
+
+(test-group "MPI test broadcast"
 
     ;;  Broadcast 
    (let* ((test-broadcast
@@ -323,6 +332,9 @@
        (srfi4-test-broadcast MPI:broadcast-u32vector list->u32vector intdata)
        (srfi4-test-broadcast MPI:broadcast-f32vector list->f32vector flodata)
        (srfi4-test-broadcast MPI:broadcast-f64vector list->f64vector flodata)))
+)
+
+(test-group "MPI test scatter/scatterv"
 
   ;; Scatter
    (let* ((test-scatter
@@ -368,6 +380,9 @@
        (srfi4-test-scatterv MPI:scatterv-u32vector  list->u32vector vvintdata)
        (srfi4-test-scatterv MPI:scatterv-f32vector  list->f32vector vvflodata)
        (srfi4-test-scatterv MPI:scatterv-f64vector  list->f64vector vvflodata)))
+)
+
+(test-group "MPI test gather/gatherv"
 
   ;; Gather
    (let* ((test-gather
@@ -428,7 +443,10 @@
 		   (map list->f32vector vvflodata))
      (test-gatherv MPI:gatherv-f64vector  (list->f64vector (list-ref vvflodata myrank))
 		   (map list->f64vector vvflodata)))
+)
 
+
+(test-group "MPI test gather to all"
 
   ;; Gather to all 
 
@@ -474,7 +492,10 @@
 		   (map list->f32vector vvflodata))
      (test-allgather MPI:allgather-f64vector  (list->f64vector (list-ref vvflodata myrank))
 		   (map list->f64vector vvflodata)))
+)
 
+
+(test-group "MPI test reduce/reduce all"
 
   ;; Reduce 
    (let* ((test-reduce 
@@ -550,7 +571,12 @@
 		    (f32vector (* 2 myrank) (+ 0.1 (* 2 myrank)) (+ 0.2 (* 2 myrank))))
     (test-allreduce MPI:allreduce-f64vector MPI:f_sum  
 		    (f64vector (* 2 myrank) (+ 0.1 (* 2 myrank)) (+ 0.2 (* 2 myrank)))))
+)
+
+
     
+(test-group "MPI test scan"
+
    ;; Scan
    (let* ((test-scan
 	  (lambda (scanfun reduceop data)
@@ -578,6 +604,10 @@
 	       (f32vector (* 2 myrank) (+ 0.1 (* 2 myrank)) (+ 0.2 (* 2 myrank))))
     (test-scan MPI:scan-f64vector MPI:f_sum  
 	       (f64vector (* 2 myrank) (+ 0.1 (* 2 myrank)) (+ 0.2 (* 2 myrank)))))
+)
+
+
+(test-group "MPI test comm split/cartesian topology"
 
   ;; Comm split
    (let ((send-in-comm
@@ -588,9 +618,9 @@
 		 (begin
 		   (print rank-in-c "[" myrank "]: sending " init)
 		   (MPI:send-bytevector init 1 0 c)
-		   (let ((n (MPI:receive MPI:any-source MPI:any-tag c)))
+		   (let ((n (MPI:receive-bytevector MPI:any-source MPI:any-tag c)))
 		     (print rank-in-c "[" myrank "]: received " n)))
-		 (let ((n (MPI:receive MPI:any-source MPI:any-tag c)))
+		 (let ((n (MPI:receive-bytevector MPI:any-source MPI:any-tag c)))
 		   (let ((n1 (string->blob (string-append (blob->string n) incr))))
 		     (print rank-in-c "[" myrank "]: received " n ", resending " n1)
 		     (MPI:send-bytevector n1 (modulo (+ 1 rank-in-c) size-of-c) 0 c))))
@@ -626,6 +656,8 @@
 
   (print myrank ": rr-fold result is " (MPI-rr-fold (lambda (x ax) (cons x ax)) '() (list-tabulate (* 4 size) identity)))
 
-  (MPI:finalize)
   )
+
+
+(MPI:finalize)
 (test-exit)
