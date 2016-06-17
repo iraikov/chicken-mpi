@@ -252,6 +252,18 @@ END
 END
 ))
 
+(define MPI:pack-size 
+    (foreign-safe-lambda* int ((int incount)
+                               (scheme-object ty)
+                               (scheme-object comm))
+#<<END
+     int result;
+     MPI_check_datatype(ty);
+     MPI_check_comm(comm);
+     MPI_Pack_size(incount, Datatype_val(ty), Comm_val(comm), &result);
+     C_return(result);
+END
+))
 
 
 (define MPI:type-char 

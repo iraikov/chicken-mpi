@@ -186,6 +186,7 @@
   MPI:type-f32
   MPI:type-f64
   MPI:make-type-struct
+  MPI:pack-size
   
   MPI:init
   MPI:spawn

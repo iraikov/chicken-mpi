@@ -507,7 +507,7 @@ END
 
 C_word MPI_scatter_data (C_word ty, C_word data, C_word sendcount, C_word recv, C_word root, C_word comm)
 {
-  unsigned char *vect, *vrecv; int  vroot, rlen, slen;
+  unsigned char *vect, *vrecv; int  vroot, slen;
   C_word result; C_word *ptr;
 
   MPI_check_comm(comm);
@@ -515,18 +515,18 @@ C_word MPI_scatter_data (C_word ty, C_word data, C_word sendcount, C_word recv, 
 
   vroot  = (int)C_num_to_int (root);
   vrecv  = C_c_bytevector(recv);
-  rlen   = C_bytevector_length(recv);
+  slen   = (int)C_num_to_int (sendcount);
 
+  printf("MPI_scatter_data: slen = %d\n", slen);
   if (data == C_SCHEME_UNDEFINED)
   {
-    MPI_Scatter(NULL, 0, MPI_DATATYPE_NULL, vrecv, rlen, Datatype_val(ty), vroot, Comm_val(comm));
+    MPI_Scatter(NULL, 0, MPI_DATATYPE_NULL, vrecv, slen, Datatype_val(ty), vroot, Comm_val(comm));
   }
   else
   {
     C_i_check_bytevector (data);
     vect  = C_c_bytevector(data);
-    slen  = (int)C_num_to_int (sendcount);
-    MPI_Scatter(vect, slen, Datatype_val(ty), vrecv, rlen, Datatype_val(ty), vroot, Comm_val(comm));
+    MPI_Scatter(vect, slen, Datatype_val(ty), vrecv, slen, Datatype_val(ty), vroot, Comm_val(comm));
   }
 
   C_return (recv);
@@ -1208,9 +1208,10 @@ C_word MPI_scatterv_f64vector (C_word sendbuf, C_word sendlengths,
     (let ((myself (MPI:comm-rank comm))
 	  (nprocs (MPI:comm-size comm))
           (tysize (MPI:type-size ty)))
+      (print "scatter: size v = " (blob-size v))
       (if (= root myself)
 	  ;; If this is the root process, scatter the data
-	  (if (= (* nprocs sendcount tysize) (blob-size v))
+	  (if (<= (* nprocs sendcount tysize) (blob-size v))
 	      (let* ((recv (make-blob (* tysize sendcount))))
 		(MPI_scatter_data ty v sendcount recv root comm))
 	      (error 'MPI:scatter "send data length is less than n * sendcount"))

@@ -20,7 +20,7 @@
 ;; <http://www.gnu.org/licenses/>.
 ;;
 
-(require-extension posix srfi-1 srfi-4 srfi-13 srfi-14 mpi test)
+(require-extension posix srfi-1 srfi-4 srfi-13 srfi-14 mpi test )
 
 (define (land . args)
   (if (null? args) #t
@@ -178,7 +178,6 @@
 (define vflodata    (list-tabulate size (lambda (i) (list-tabulate vsize (lambda (j) (+ i (* 0.1 j)))))))
 (define vvintdata   (list-tabulate size (lambda (i) (list-tabulate (+ i 1) (lambda (j) (+ (* 10 i) j))))))
 (define vvflodata   (list-tabulate size (lambda (i) (list-tabulate (+ i 1) (lambda (j) (+ i (* 0.1 j)))))))
-
 
 (test-group "MPI test 1"
 
@@ -381,6 +380,8 @@
        (srfi4-test-scatterv MPI:scatterv-f32vector  list->f32vector vvflodata)
        (srfi4-test-scatterv MPI:scatterv-f64vector  list->f64vector vvflodata)))
 )
+
+
 
 (test-group "MPI test gather/gatherv"
 

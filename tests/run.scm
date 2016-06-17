@@ -20,6 +20,9 @@
 
 (define prefix (pathname-directory (program-name)))
 
-(if (not (zero? (system (conc "mpirun -np 32 "  (find-program 'csi) " -s " 
-			      (make-pathname prefix  "mpitest.scm")))))
+(if (not (and (zero? (system (conc "mpirun -np 32 "  (find-program 'csi) " -s " 
+                                   (make-pathname prefix  "datatest.scm"))))
+              (zero? (system (conc "mpirun -np 32 "  (find-program 'csi) " -s " 
+                                   (make-pathname prefix  "mpitest.scm"))))))
+              
     (exit 1))
