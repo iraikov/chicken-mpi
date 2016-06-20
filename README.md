@@ -320,7 +320,7 @@ u32vector, f32vector, f64vector`
 
 
 
-=== Round-robin routines
+### Round-robin routines
 
 
 The following variants of `fold`, `map` and `for-each` process
