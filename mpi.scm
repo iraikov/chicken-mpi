@@ -24,6 +24,7 @@
 (module mpi
 
  (MPI:barrier
+
   MPI:broadcast-int 
   MPI:scatter-int 
   MPI:gather-int 
@@ -33,6 +34,13 @@
   MPI:gather-flonum 
   MPI:allgather-flonum
   MPI:broadcast-fixnum 
+  
+  MPI:broadcast
+  MPI:scatter 
+  MPI:scatterv
+  MPI:gather 
+  MPI:gatherv 
+  MPI:allgather
   
   MPI:broadcast-bytevector
   MPI:scatter-bytevector 
@@ -147,6 +155,7 @@
   MPI:make-dims
   MPI:cart-rank
   MPI:cart-coords
+
   MPI:group? 
   MPI:group-size
   MPI:group-rank
@@ -159,10 +168,31 @@
   MPI:group-excl 
   MPI:group-range-incl
   MPI:group-range-excl
+
+  MPI:datatype?
+  MPI:type-extent
+  MPI:type-size
+  MPI:type-char
+  MPI:type-int
+  MPI:type-fixnum
+  MPI:type-flonum
+  MPI:type-byte
+  MPI:type-s8
+  MPI:type-u8
+  MPI:type-s16
+  MPI:type-u16
+  MPI:type-s32
+  MPI:type-u32
+  MPI:type-f32
+  MPI:type-f64
+  MPI:make-type-struct
+  MPI:pack-size
+  
   MPI:init
   MPI:spawn
   MPI:finalize 
   MPI:wtime 
+
   MPI:send
   MPI:send-fixnum
   MPI:send-int 
@@ -179,6 +209,8 @@
   MPI:probe 
   MPI:receive 
   MPI:receive-with-status 
+  MPI:receive-bytevector 
+  MPI:receive-bytevector-with-status 
   MPI:receive-flonum 
   MPI:receive-fixnum
   MPI:receive-int
@@ -190,7 +222,7 @@
   MPI:receive-s32vector
   MPI:receive-f32vector
   MPI:receive-f64vector
-  MPI:receive-bytevector
+
   MPI:any-tag
   MPI:any-source
   
@@ -219,6 +251,7 @@
 <#
 
 (include "init")
+(include "datatype")
 (include "group")
 (include "comm")
 (include "msgs")

@@ -378,14 +378,14 @@ this node.
         (if (< i size)
             (begin
               ;; Send Hello message to process of rank i
-              (MPI:send (string->blob (sprintf "Hello ~a..." i)) i 0 comm-world)
+              (MPI:send-bytevector (string->blob (sprintf "Hello ~a..." i)) i 0 comm-world)
               (recur (+ 1 i)))
             ))
 
       (let recur ((i 1))
         (if (< i size)
              ;; Wait for a response from process of rank i
-            (let ((n (blob->string (MPI:receive i MPI:any-tag comm-world))))
+            (let ((n (blob->string (MPI:receive-bytevector i MPI:any-tag comm-world))))
               (printf "[~a/~a]: received: ~a~%" myrank size n)
               (recur (+ 1 i)))
             ))
@@ -393,10 +393,10 @@ this node.
     (begin
       (printf "[~a/~a]: I am a worker\n" myrank size)
       ;; Wait for a message from the master (process 0)
-      (let ((n (blob->string (MPI:receive 0 MPI:any-tag comm-world))))
+      (let ((n (blob->string (MPI:receive-bytevector 0 MPI:any-tag comm-world))))
         (printf "[~a/~a]: received: ~a\n" myrank size n)
         ;; Send a response back to the master
-        (MPI:send (string->blob (sprintf "Processor ~a reporting!" myrank))
+        (MPI:send-bytevector (string->blob (sprintf "Processor ~a reporting!" myrank))
                      0 0 comm-world))
       )
     )

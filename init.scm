@@ -226,6 +226,8 @@ EOF
   char ** argv; char *s;
   MPI_Errhandler hdlr;
   C_word x, tail;
+  MPI_Datatype newty;
+  int status;
 
   C_i_check_list (arguments);
   if (C_i_listp (arguments))

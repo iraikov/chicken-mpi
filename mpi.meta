@@ -17,7 +17,7 @@
 
  ; A list of eggs mpi depends on.
 
- (test-depends test)
+ (test-depends test )
 
  (author "Ivan Raikov")
 
