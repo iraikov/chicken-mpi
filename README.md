@@ -174,43 +174,91 @@ SRFI-4 s32vector.
 
 
 
+### MPI datatypes
+
+`MPI:datatype? :: OBJ -> BOOL`
+
+Returns true if `OBJ` is an MPI datatype object, false otherwise. 
+
+`MPI:type-extent :: DATATYPE -> (EXTENT LB)`
+
+Returns the extent and lower bound of an MPI data type.
+
+`MPI:type-size :: DATATYPE -> INT`
+
+Returns the size of a datatype.
+
+
+`MPI:type-char`
+
+`MPI:type-int`
+
+`MPI:type-fixnum`
+
+`MPI:type-flonum`
+
+`MPI:type-byte`
+
+`MPI:type-s8`
+
+`MPI:type-u8`
+
+`MPI:type-s16`
+
+`MPI:type-u16`
+
+`MPI:type-s32`
+
+`MPI:type-u32`
+
+`MPI:type-f32`
+
+`MPI:type-f64`
+
+Predefined MPI data types.
+
+`MPI:make-type-struct :: FIELD-COUNT * BLOCK-LENS * FIELDTYS -> DATATYPE`
+
+Given a gield count, field lengths and field types, creates and
+returns a new MPI structure data type with the given fields.
+
+
+
 ### Point-to-point communication
 
 
 Most communication procedures in this library come in several flavors,
-for fixnums, integers, floating point numbers, bytevectors, and for
-each of the SRFI-4 homogeneous vector types.
+for derived datatypes, fixnums, integers, floating point numbers,
+bytevectors, and for each of the SRFI-4 homogeneous vector types.
 
+`MPI:send :: DATATYPE * DATA * DEST * TAG * COMM -> UNDEFINED`
 `MPI:send-TYPE :: DATA * DEST * TAG * COMM -> UNDEFINED`
 
-Performs a standard-mode blocking send. Argument `DEST` is the rank
-of the destination process. Argument `TAG` is integer message
-tag. `TYPE` is one of the following: `fixnum, int, flonum,
-bytevector, s8vector, u8vector, s16vector, u16vector, s32vector,
-u32vector, f32vector, f64vector`
+Performs a standard-mode blocking send. Argument `DEST` is the rank of
+the destination process. Argument `TAG` is integer message
+tag. Argument `DATATYPE` is an MPI datatype object. `TYPE` is one of
+the following: `fixnum, int, flonum, bytevector, s8vector, u8vector,
+s16vector, u16vector, s32vector, u32vector, f32vector, f64vector`
 
 
 
-`MPI:receive-TYPE :: SOURCE * TAG * COMM -> DATA`
-
-
-
+`MPI:receive :: DATATYPE * SOURCE * TAG * COMM -> DATA`
 `MPI:receive-TYPE :: LENGTH * SOURCE * TAG * COMM -> DATA`
 
-Performs a standard-mode blocking receive. Argument `DEST` is the
-rank of the destination process. Argument `TAG` is integer message
+Performs a standard-mode blocking receive. Argument `DEST` is the rank
+of the destination process. Argument `TAG` is integer message
 tag. Argument `LENGTH` is present only in the vector
-procedures. `TYPE` is one of the following: `fixnum, int, flonum,
-bytevector, s8vector, u8vector, s16vector, u16vector, s32vector,
-u32vector, f32vector, f64vector`
+procedures. Argument `DATATYPE` is an MPI datatype object. `TYPE` is
+one of the following: `fixnum, int, flonum, bytevector, s8vector,
+u8vector, s16vector, u16vector, s32vector, u32vector, f32vector,
+f64vector`
 
 
+`MPI:probe :: DATATYPE * SOURCE * TAG * COMM -> (COUNT * SOURCE * TAG)`
 
-`MPI:probe :: SOURCE * TAG * COMM -> (COUNT * SOURCE * TAG)`
-
-Check for an incoming message. This is a blocking call that returns
-only after a matching message is found. Argument `SOURCE` can be
-`MPI:any-source`. Argument `TAG` can be `MPI:any-tag`.
+Check for an incoming message of the given type. This is a blocking
+call that returns only after a matching message is found. Argument
+`SOURCE` can be `MPI:any-source`. Argument `TAG` can be `MPI:any-tag`.
 
 
 ### Group communication
@@ -220,63 +268,75 @@ only after a matching message is found. Argument `SOURCE` can be
 Barrier synchronization. 
 
 
+`MPI:broadcast :: DATATYPE * DATA * ROOT * COMM -> UNDEFINED`
 `MPI:broadcast-TYPE :: DATA * ROOT * COMM -> UNDEFINED`
 
 Broadcasts a message from the process with rank root to all other
-processes of the group. `TYPE` is one of the following: `fixnum,
-int, flonum, bytevector, s8vector, u8vector, s16vector, u16vector,
-s32vector, u32vector, f32vector, f64vector`
+processes of the group. Argument `DATATYPE` is an MPI datatype
+object. `TYPE` is one of the following: `fixnum, int, flonum,
+bytevector, s8vector, u8vector, s16vector, u16vector, s32vector,
+u32vector, f32vector, f64vector`
 
 
 
+`MPI:scatter :: DATATYPE * DATA * SENDCOUNT * ROOT * COMM -> DATA`
 `MPI:scatter-TYPE :: DATA * SENDCOUNT * ROOT * COMM -> DATA`
 
 Sends data from the root process to all processes in a group, and
-returns the data received by the calling process. Argument
-`SENDCOUNT` is the number of elements sent to each process. Argument
-`DATA` is only required at the root process. All other processes can
-invoke this procedure with (void) as `DATA`. `TYPE` is one of the
-following: `int, flonum, bytevector, s8vector, u8vector, s16vector,
-u16vector, s32vector, u32vector, f32vector, f64vector`
+returns the data received by the calling process. Argument `SENDCOUNT`
+is the number of elements sent to each process. Argument `DATA` is
+only required at the root process. All other processes can invoke this
+procedure with (void) as `DATA`. Argument `DATATYPE` is an MPI
+datatype object. `TYPE` is one of the following: `int, flonum,
+bytevector, s8vector, u8vector, s16vector, u16vector, s32vector,
+u32vector, f32vector, f64vector`
 
 
 
+`MPI:scatterv :: DATATYPE * DATA * ROOT * COMM -> DATA`
 `MPI:scatterv-TYPE :: DATA * ROOT * COMM -> DATA`
 
 Sends variable-length data from the root process to all processes in a
 group, and returns the data received by the calling process.  Argument
 `DATA` is only required at the root process, and is a list of values
-of type `TYPE`, where each element of the list is sent to the
-process of corresponding rank. All other processes can invoke this
-procedure with (void) as `DATA`. `TYPE` is one of the following:
-`int, flonum, bytevector, s8vector, u8vector, s16vector, u16vector,
-s32vector, u32vector, f32vector, f64vector`
+of type `TYPE`, where each element of the list is sent to the process
+of corresponding rank. All other processes can invoke this procedure
+with (void) as `DATA`. Argument `DATATYPE` is an MPI datatype
+object. `TYPE` is one of the following: `int, flonum, bytevector,
+s8vector, u8vector, s16vector, u16vector, s32vector, u32vector,
+f32vector, f64vector`
 
 
 
+`MPI:gather :: DATATYPE * DATA * SENDCOUNT * ROOT * COMM -> DATA`
 `MPI:gather-TYPE :: DATA * SENDCOUNT * ROOT * COMM -> DATA`
 
 Gathers data from a group of processes, where each process send data
 of the same length.  Argument `SENDCOUNT` is the number of data
-elements being sent by each process. `TYPE` is one of the following:
-`int, flonum, bytevector, s8vector, u8vector, s16vector, u16vector,
-s32vector, u32vector, f32vector, f64vector`
+elements being sent by each process. Argument `DATATYPE` is an MPI
+datatype object. `TYPE` is one of the following: `int, flonum,
+bytevector, s8vector, u8vector, s16vector, u16vector, s32vector,
+u32vector, f32vector, f64vector`
 
 
 
+`MPI:gatherv-TYPE :: DATATYPE * DATA * ROOT * COMM -> DATA`
 `MPI:gatherv-TYPE :: DATA * ROOT * COMM -> DATA`
 
 Gathers data from a group of processes, where each process can send
-data of variable length. `TYPE` is one of the following: `int,
-flonum, bytevector, s8vector, u8vector, s16vector, u16vector,
-s32vector, u32vector, f32vector, f64vector`
+data of variable length. Argument `DATATYPE` is an MPI datatype
+object. `TYPE` is one of the following: `int, flonum, bytevector,
+s8vector, u8vector, s16vector, u16vector, s32vector, u32vector,
+f32vector, f64vector`
 
 
 
+`MPI:allgather :: DATATYPE * DATA * ROOT * COMM -> DATA`
 `MPI:allgather-TYPE :: DATA * ROOT * COMM -> DATA`
 
 Gathers data of variable length from all processes and distributes it
-to all processes. `TYPE` is one of the following: `int, flonum,
+to all processes. Argument `DATATYPE` is an MPI datatype
+object. `TYPE` is one of the following: `int, flonum,
 bytevector, s8vector, u8vector, s16vector, u16vector, s32vector,
 u32vector, f32vector, f64vector`
 
@@ -491,7 +551,7 @@ this node.
 ## License
 
 >
-> Copyright 2007-2015 Ivan Raikov
+> Copyright 2007-2016 Ivan Raikov
 > 
 > Based on the Ocaml MPI library by Xavier Leroy. 
 > 
