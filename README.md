@@ -23,14 +23,14 @@ library has been tested with Open MPI versions 1.2.4 - 1.10.1.
 ### Initialization and time procedures
 
 
-<procedure>MPI:init :: [ARG1 ...] -> UNDEFINED</procedure>
+`MPI:init :: [ARG1 ...] -> UNDEFINED`
 
 Initializes the MPI execution environment. This routine must be called
 before any other MPI routine. MPI can be initialized at most once.
 
 
 
-<procedure>MPI:spawn :: COMMAND * ARGUMENTS *  MAXPROCS * LOCATIONS * ROOT * COMM -> (COMM * S32VECTOR)</procedure>
+`MPI:spawn :: COMMAND * ARGUMENTS *  MAXPROCS * LOCATIONS * ROOT * COMM -> (COMM * S32VECTOR)`
 
 Spawns `MAXPROCS` identical copies of the MPI program specified by
 `COMMAND` and returns an intercommunicator and a vector of status
@@ -38,11 +38,11 @@ values. `ARGUMENTS` is a list of command-line
 arguments. `LOCATIONS` is a list of string pairs `(HOST * WDIR)`
 that tell MPI the host and working directory where to start processes.
 
-<procedure>MPI:finalize</procedure>
+`MPI:finalize`
 
 Terminates the MPI execution environment. 
 
-<procedure>MPI:wtime :: VOID -> SECONDS</procedure>
+`MPI:wtime :: VOID -> SECONDS`
 
 Returns the number of seconds representing elapsed wall-clock time on
 the calling process.
@@ -51,36 +51,36 @@ the calling process.
 ### Handling of communicators
 
 
-<procedure>MPI:comm? :: OBJ -> BOOL</procedure>
+`MPI:comm? :: OBJ -> BOOL`
 
 Returns true if `OBJ` is an MPI communicator object, false otherwise. 
 
-<procedure>MPI:get-comm-world:: VOID -> COMM</procedure>
+`MPI:get-comm-world:: VOID -> COMM`
 
 Returns the default communicator created by `MPI_Init`; the group
 associated with this communicator contains all processes.
 
-<procedure>MPI:comm-size :: COMM -> INTEGER</procedure>
+`MPI:comm-size :: COMM -> INTEGER`
 
 Returns the size of the group associated with communicator `COMM`. 
 
 
-<procedure>MPI:comm-rank :: COMM -> INTEGER</procedure>
+`MPI:comm-rank :: COMM -> INTEGER`
 
 Returns the rank of the calling process in communicator `COMM`. 
 
 
-<procedure>MPI:comm-equal? :: COMM1 * COMM2 -> BOOL</procedure>
+`MPI:comm-equal? :: COMM1 * COMM2 -> BOOL`
 
 Returns true if the two given communicators are for identical groups, false otherwise. 
 
 
-<procedure>MPI:comm-split :: COMM * COLOR * KEY -> COMM</procedure>
+`MPI:comm-split :: COMM * COLOR * KEY -> COMM`
 
 Creates new communicators based on colors and keys. 
 
 
-<procedure>MPI:comm-create :: COMM * GROUP -> COMM</procedure>
+`MPI:comm-create :: COMM * GROUP -> COMM`
 
 Creates a new communicator with communication group that spans all
 processes in `GROUP` and a new context. See the procedures in
@@ -89,7 +89,7 @@ to create process group objects.
 
 
 
-<procedure>MPI:make-cart :: COMM * DIMS * PERIODS * REORDER -> COMM</procedure>
+`MPI:make-cart :: COMM * DIMS * PERIODS * REORDER -> COMM`
 
 Creates a new communicator with Cartesian topology
 information. Argument `DIMS` is an SRFI-4 s32vector that contains
@@ -101,7 +101,7 @@ may be reordered.
 
 
 
-<procedure>MPI:make-dims :: NNODES * NDIMS -> DIMS</procedure>
+`MPI:make-dims :: NNODES * NDIMS -> DIMS`
 
 Creates a division of processes in a Cartesian grid. Argument
 `NNODES` is the number of nodes in the grid. Argument `NDIMS` is
@@ -110,7 +110,7 @@ s32vector.
 
 
 
-<procedure>MPI:cart-coords :: COMM * RANK -> COORDS</procedure>
+`MPI:cart-coords :: COMM * RANK -> COORDS`
 
 Determines process coordinates in Cartesian topology, given a rank in
 the group. The return value is an SRFI-4 s32vector of length `NDIMS`
@@ -121,44 +121,44 @@ the group. The return value is an SRFI-4 s32vector of length `NDIMS`
 ### Handling of communication groups
 
 
-<procedure>MPI:group? :: OBJ -> BOOL</procedure>
+`MPI:group? :: OBJ -> BOOL`
 
 Returns true if `OBJ` is an MPI group object, false otherwise. 
 
 
 
-<procedure>MPI:comm-group :: COMM -> GROUP</procedure>
+`MPI:comm-group :: COMM -> GROUP`
 Returns the group associated with the given communicator. 
 
 
-<procedure>MPI:group-size :: GROUP -> INTEGER</procedure>
+`MPI:group-size :: GROUP -> INTEGER`
 Returns the size of the group `GROUP`. 
 
 
-<procedure>MPI:group-rank :: GROUP -> INTEGER</procedure>
+`MPI:group-rank :: GROUP -> INTEGER`
 Returns the rank of the calling process in the given group. 
 
 
-<procedure>MPI:group-translate-ranks :: GROUP1 * RANKS * GROUP2 -> RANKS2</procedure>
+`MPI:group-translate-ranks :: GROUP1 * RANKS * GROUP2 -> RANKS2`
 
 Translates the ranks of processes in one group to those in another
 group. The return value is an SRFI-4 s32vector.
 
 
 
-<procedure>MPI:group-union :: GROUP1 * GROUP2 -> GROUP</procedure>
+`MPI:group-union :: GROUP1 * GROUP2 -> GROUP`
 
 
 
-<procedure>MPI:group-difference :: GROUP1 * GROUP2 -> GROUP</procedure>
+`MPI:group-difference :: GROUP1 * GROUP2 -> GROUP`
 
 
 
-<procedure>MPI:group-intersection :: GROUP1 * GROUP2 -> GROUP</procedure>
+`MPI:group-intersection :: GROUP1 * GROUP2 -> GROUP`
 
 
 
-<procedure>MPI:group-incl :: GROUP * RANKS -> GROUP</procedure>
+`MPI:group-incl :: GROUP * RANKS -> GROUP`
 
 Produces a group by reordering an existing group and taking only
 members with the given ranks. Argument `RANKS` is an SRFI-4
@@ -166,7 +166,7 @@ s32vector.
 
 
 
-<procedure>MPI:group-excl :: GROUP * RANKS -> GROUP</procedure>
+`MPI:group-excl :: GROUP * RANKS -> GROUP`
 
 Produces a group by reordering an existing group and taking only
 members that do not have the given ranks. Argument `RANKS` is an
@@ -181,7 +181,7 @@ Most communication procedures in this library come in several flavors,
 for fixnums, integers, floating point numbers, bytevectors, and for
 each of the SRFI-4 homogeneous vector types.
 
-<procedure>MPI:send-TYPE :: DATA * DEST * TAG * COMM -> UNDEFINED</procedure>
+`MPI:send-TYPE :: DATA * DEST * TAG * COMM -> UNDEFINED`
 
 Performs a standard-mode blocking send. Argument `DEST` is the rank
 of the destination process. Argument `TAG` is integer message
@@ -191,11 +191,11 @@ u32vector, f32vector, f64vector`
 
 
 
-<procedure>MPI:receive-TYPE :: SOURCE * TAG * COMM -> DATA</procedure>
+`MPI:receive-TYPE :: SOURCE * TAG * COMM -> DATA`
 
 
 
-<procedure>MPI:receive-TYPE :: LENGTH * SOURCE * TAG * COMM -> DATA</procedure>
+`MPI:receive-TYPE :: LENGTH * SOURCE * TAG * COMM -> DATA`
 
 Performs a standard-mode blocking receive. Argument `DEST` is the
 rank of the destination process. Argument `TAG` is integer message
@@ -206,7 +206,7 @@ u32vector, f32vector, f64vector`
 
 
 
-<procedure>MPI:probe :: SOURCE * TAG * COMM -> (COUNT * SOURCE * TAG)</procedure>
+`MPI:probe :: SOURCE * TAG * COMM -> (COUNT * SOURCE * TAG)`
 
 Check for an incoming message. This is a blocking call that returns
 only after a matching message is found. Argument `SOURCE` can be
@@ -216,11 +216,11 @@ only after a matching message is found. Argument `SOURCE` can be
 ### Group communication
 
 
-<procedure>MPI:barrier :: COMM -> UNDEFINED</procedure>
+`MPI:barrier :: COMM -> UNDEFINED`
 Barrier synchronization. 
 
 
-<procedure>MPI:broadcast-TYPE :: DATA * ROOT * COMM -> UNDEFINED</procedure>
+`MPI:broadcast-TYPE :: DATA * ROOT * COMM -> UNDEFINED`
 
 Broadcasts a message from the process with rank root to all other
 processes of the group. `TYPE` is one of the following: `fixnum,
@@ -229,7 +229,7 @@ s32vector, u32vector, f32vector, f64vector`
 
 
 
-<procedure>MPI:scatter-TYPE :: DATA * SENDCOUNT * ROOT * COMM -> DATA</procedure>
+`MPI:scatter-TYPE :: DATA * SENDCOUNT * ROOT * COMM -> DATA`
 
 Sends data from the root process to all processes in a group, and
 returns the data received by the calling process. Argument
@@ -241,7 +241,7 @@ u16vector, s32vector, u32vector, f32vector, f64vector`
 
 
 
-<procedure>MPI:scatterv-TYPE :: DATA * ROOT * COMM -> DATA</procedure>
+`MPI:scatterv-TYPE :: DATA * ROOT * COMM -> DATA`
 
 Sends variable-length data from the root process to all processes in a
 group, and returns the data received by the calling process.  Argument
@@ -254,7 +254,7 @@ s32vector, u32vector, f32vector, f64vector`
 
 
 
-<procedure>MPI:gather-TYPE :: DATA * SENDCOUNT * ROOT * COMM -> DATA</procedure>
+`MPI:gather-TYPE :: DATA * SENDCOUNT * ROOT * COMM -> DATA`
 
 Gathers data from a group of processes, where each process send data
 of the same length.  Argument `SENDCOUNT` is the number of data
@@ -264,7 +264,7 @@ s32vector, u32vector, f32vector, f64vector`
 
 
 
-<procedure>MPI:gatherv-TYPE :: DATA * ROOT * COMM -> DATA</procedure>
+`MPI:gatherv-TYPE :: DATA * ROOT * COMM -> DATA`
 
 Gathers data from a group of processes, where each process can send
 data of variable length. `TYPE` is one of the following: `int,
@@ -273,7 +273,7 @@ s32vector, u32vector, f32vector, f64vector`
 
 
 
-<procedure>MPI:allgather-TYPE :: DATA * ROOT * COMM -> DATA</procedure>
+`MPI:allgather-TYPE :: DATA * ROOT * COMM -> DATA`
 
 Gathers data of variable length from all processes and distributes it
 to all processes. `TYPE` is one of the following: `int, flonum,
@@ -282,7 +282,7 @@ u32vector, f32vector, f64vector`
 
 
 
-<procedure>MPI:reduce-TYPE :: DATA * OP * ROOT * COMM -> DATA</procedure>
+`MPI:reduce-TYPE :: DATA * OP * ROOT * COMM -> DATA`
 
 Reduces values on all processes within a group, using a global reduce
 operation, and return the result at the root process. `OP` is one of
@@ -295,7 +295,7 @@ u32vector, f32vector, f64vector`
 
 
 
-<procedure>MPI:allreduce-TYPE :: DATA * OP * COMM -> DATA</procedure>
+`MPI:allreduce-TYPE :: DATA * OP * COMM -> DATA`
 
 Reduces values on all processes within a group, using a global reduce
 operation, and return the result at each process. `OP` is one of the
@@ -308,7 +308,7 @@ u32vector, f32vector, f64vector`
 
 
 
-<procedure>MPI:scan-TYPE :: DATA * OP * COMM -> DATA</procedure>
+`MPI:scan-TYPE :: DATA * OP * COMM -> DATA`
 
 Computes a partial reduction across the processes in a group. `OP`
 is one of the following: `MPI:i_max, MPI:i_min, MPI:i_sum,
@@ -328,11 +328,11 @@ lists in round-robin fashion on MPI nodes: for a given node `n`,
 only list elements whose index is a modulo of n will be processed on
 this node.
 
-<procedure>MPI-rr-fold :: FN * INITIAL * XS -> RESULT</procedure>
+`MPI-rr-fold :: FN * INITIAL * XS -> RESULT`
 
-<procedure>MPI-rr-map :: FN * XS -> RESULT</procedure>
+`MPI-rr-map :: FN * XS -> RESULT`
 
-<procedure>MPI-rr-for-each :: FN * XS -> VOID</procedure>
+`MPI-rr-for-each :: FN * XS -> VOID`
 
 
 
