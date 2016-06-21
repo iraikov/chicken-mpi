@@ -334,10 +334,9 @@ END
 (define MPI:make-type-struct 
     (foreign-primitive scheme-object ((int fieldcount)
                                       (scheme-object blocklens)
-                                      (scheme-object displs)
                                       (scheme-object fieldtys))
 #<<EOF
-  int i, status;
+  int i, status, fldtysize;
   int *array_of_blocklens;
   MPI_Aint *array_of_displs;
   MPI_Datatype *array_of_types, newtype;
@@ -345,7 +344,6 @@ END
   C_word result, x, tail;
 
   C_i_check_list (blocklens);
-  C_i_check_list (displs);
   C_i_check_list (fieldtys);
 
   if (!(fieldcount > 0))
@@ -364,19 +362,24 @@ END
      tail = C_u_i_cdr (tail);
      array_of_blocklens[i] = C_num_to_int(x);
   }
-  tail = displs;
-  for (i=0; i<fieldcount; i++)
-  {
-     x = C_u_i_car (tail);
-     tail = C_u_i_cdr (tail);
-     array_of_displs[i] = C_num_to_int(x);
-  }
   tail = fieldtys;
   for (i=0; i<fieldcount; i++)
   {
      x = C_u_i_car (tail);
      tail = C_u_i_cdr (tail);
      array_of_types[i] = Datatype_val(x);
+  }
+  array_of_displs[0] = 0;
+  for (i=1; i<fieldcount; i++)
+  {
+     status = MPI_Type_size(array_of_types[i-1], &fldtysize);
+
+     if (status != MPI_SUCCESS) 
+     {
+        chicken_MPI_exception (MPI_ERR_TYPE, 20, "invalid MPI datatype");
+     }
+     
+     array_of_displs[i] = array_of_displs[i-1] + fldtysize * array_of_blocklens[i-1];
   }
 
   status = MPI_Type_create_struct(fieldcount, 
@@ -385,9 +388,6 @@ END
                                   array_of_types,
                                   &newtype);
 
-  free(array_of_blocklens);
-  free(array_of_displs);
-  free(array_of_types);
 
   if (status != MPI_SUCCESS) 
   {
@@ -404,6 +404,10 @@ END
   newdatatype.tag = MPI_DATATYPE_TAG;
   newdatatype.datatype_data = (void *)newtype;
   result = (C_word)&newdatatype;
+
+  free(array_of_blocklens);
+  free(array_of_displs);
+  free(array_of_types);
 
   C_return(result);
 EOF
