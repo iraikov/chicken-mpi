@@ -8,7 +8,8 @@
 (define (blob-concatenate data extent)
   (let ((buf (make-blob (* extent (length data)))))
     (fold
-     (lambda (b i) (move-memory! b buf (blob-size b) 0 (* i extent)) (+ i 1))
+     (lambda (b i) 
+       (move-memory! b buf (blob-size b) 0 (* i extent)) (+ i 1))
      0 data)
     buf))
 
@@ -22,7 +23,6 @@
 
 (define nflds 3)
 (define blocklens '(10 1 1))
-(define displs '(0 10 14))
 (define fieldtys `(,MPI:type-char ,MPI:type-u32 ,MPI:type-f64))
 
 (if (zero? myrank) 
@@ -31,7 +31,7 @@
       (print "extent of MPI char type is " (MPI:type-extent MPI:type-char))
       ))
 
-(define newty (MPI:make-type-struct nflds blocklens displs fieldtys))
+(define newty (MPI:make-type-struct nflds blocklens fieldtys))
 (define tysize (MPI:type-size newty))
 
 (if (zero? myrank) 
