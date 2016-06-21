@@ -536,6 +536,7 @@ this node.
 
 ## Version history
 
+- 2.0 : Support for MPI derived datatypes
 - 1.14 : Added simple round-robin routines
 - 1.12 : Fixes to allgather-int and allgather-flonum (thanks to Peter Bex)
 - 1.11 : Test script fixes
