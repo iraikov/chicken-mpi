@@ -2953,9 +2953,9 @@ C_word MPI_alltoallv_data (C_word ty, C_word sendbuf, C_word sendlengths,
 
 
 C_word MPI_alltoallv_bytevector (C_word sendbuf, C_word sendlengths, 
-			        C_word recvbuf, C_word recvlengths, C_word comm,
-			        C_word sendcounts, C_word senddispls,
-                                C_word recvcounts, C_word recvdispls)
+			         C_word recvbuf, C_word recvlengths, C_word comm,
+			         C_word sendcounts, C_word senddispls,
+                                 C_word recvcounts, C_word recvdispls)
 {
   int slen, rlen;
   int *vsendlengths, *vsendcounts, *vsenddispls;
@@ -3314,9 +3314,9 @@ C_word MPI_alltoallv_f64vector (C_word sendbuf, C_word sendlengths,
 	   (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
 	   (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
 	   (simemcpy  (string->symbol (string-append (symbol->string type) "vector_simemcpy")))
-	   (allgather (string->symbol (string-append "MPI_alltoall_" (symbol->string type) "vector")))
+	   (alltoall  (string->symbol (string-append "MPI_alltoall_" (symbol->string type) "vector")))
 	   (name      (string->symbol (string-append "MPI:alltoall-" (symbol->string type) "vector"))))
-       `(,%define ,name (make-alltoall ,vlen ,makev ,simemcpy ,allgather)))))
+       `(,%define ,name (make-alltoall ,vlen ,makev ,simemcpy ,alltoall)))))
 
 
 (define-srfi4-alltoall s8)
@@ -3337,7 +3337,7 @@ C_word MPI_alltoallv_f64vector (C_word sendbuf, C_word sendlengths,
         (tysize (MPI:type-size ty)))
       (if (not (= (/ (blob-size v) tysize) (* nprocs n)))
           (error 'alltoall "the length of send vector is not equal to nprocs * n"))
-      ;; allocate a buffer and gather the data
+      ;; allocate a buffer and distribute the data
       (let ((recv (make-blob (* n tysize nprocs))))
         (MPI_alltoall_data ty v n recv n comm)
         ;; Build a list of results & return
@@ -3348,6 +3348,131 @@ C_word MPI_alltoallv_f64vector (C_word sendbuf, C_word sendlengths,
                   (bytevector_simemcpy vect recv vlen offset)
                   (loop (+ 1 i) (+ offset vlen) (cons vect lst)))
                 (reverse lst)))))))
+
+
+(define MPI_alltoallv_bytevector (foreign-lambda scheme-object "MPI_alltoallv_bytevector" 
+                                                 scheme-object scheme-object scheme-object 
+                                                 scheme-object scheme-object scheme-object 
+                                                 scheme-object scheme-object scheme-object ))
+
+(define MPI_alltoallv_data (foreign-lambda scheme-object "MPI_alltoallv_data" 
+                                           scheme-object scheme-object scheme-object scheme-object 
+                                           scheme-object scheme-object scheme-object 
+                                           scheme-object scheme-object scheme-object ))
+
+(define MPI_alltoallv_u8vector (foreign-lambda scheme-object "MPI_alltoallv_u8vector" 
+                                               scheme-object scheme-object scheme-object 
+                                               scheme-object scheme-object scheme-object 
+                                               scheme-object scheme-object scheme-object ))
+(define MPI_alltoallv_s8vector (foreign-lambda scheme-object "MPI_alltoallv_s8vector" 
+                                               scheme-object scheme-object scheme-object 
+                                               scheme-object scheme-object scheme-object 
+                                               scheme-object scheme-object scheme-object ))
+
+
+(define MPI_alltoallv_u16vector (foreign-lambda scheme-object "MPI_alltoallv_u16vector" 
+                                                scheme-object scheme-object scheme-object 
+                                                scheme-object scheme-object scheme-object 
+                                                scheme-object scheme-object scheme-object ))
+(define MPI_alltoallv_s16vector (foreign-lambda scheme-object "MPI_alltoallv_s16vector" 
+                                                scheme-object scheme-object scheme-object 
+                                                scheme-object scheme-object scheme-object 
+                                                scheme-object scheme-object scheme-object ))
+
+
+(define MPI_alltoallv_u32vector (foreign-lambda scheme-object "MPI_alltoallv_u32vector" 
+                                                scheme-object scheme-object scheme-object 
+                                                scheme-object scheme-object scheme-object 
+                                                scheme-object scheme-object scheme-object ))
+(define MPI_alltoallv_s32vector (foreign-lambda scheme-object "MPI_alltoallv_s32vector" 
+                                                scheme-object scheme-object scheme-object 
+                                                scheme-object scheme-object scheme-object 
+                                                scheme-object scheme-object scheme-object ))
+
+
+(define MPI_alltoallv_f32vector (foreign-lambda scheme-object "MPI_alltoallv_f32vector" 
+                                                scheme-object scheme-object scheme-object 
+                                                scheme-object scheme-object scheme-object 
+                                                scheme-object scheme-object scheme-object ))
+(define MPI_alltoallv_f64vector (foreign-lambda scheme-object "MPI_alltoallv_f64vector" 
+                                                scheme-object scheme-object scheme-object 
+                                                scheme-object scheme-object scheme-object 
+                                                scheme-object scheme-object scheme-object ))
+
+
+(define (make-alltoallv vlen makev simemcpy alltoallv)
+  (lambda (data sendlens comm)
+    (let ((nprocs (MPI:comm-size comm)))
+      ;; Distribute the lengths of the data from all processes
+      (let ((recvlengths (MPI_alltoall_s32vector sendlens 1 (make-s32vector nprocs) 1 comm)))
+        ;; Allocate receive buffer 
+        (let* ((total    (fold + 0 (s32vector->list recvlengths)))
+               (recvbuf  (makev total)))
+          ;; Distribute the data
+          (alltoallv data sendlens recvbuf recvlengths comm
+                     (make-s32vector nprocs) (make-s32vector nprocs)
+                     (make-s32vector nprocs) (make-s32vector nprocs))
+          ;; Build a list of results & return
+          (let loop ((i 0) (offset 0) (lst (list)))
+            (if (< i nprocs)
+                (let* ((len   (s32vector-ref recvlengths i))
+                       (vect  (makev len)))
+                  (simemcpy vect recvbuf len offset)
+                  (loop (+ 1 i) (+ offset len) (cons vect lst)))
+                (reverse lst)))
+          ))
+      ))
+  )
+      
+
+	  
+(define-syntax define-srfi4-alltoallv
+  (lambda (x r c)
+    (let* ((type      (cadr x))
+	   (%define   (r 'define))
+	   (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
+	   (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
+	   (simemcpy  (string->symbol (string-append (symbol->string type) "vector_simemcpy")))
+	   (alltoallv (string->symbol (string-append "MPI_alltoallv_" (symbol->string type) "vector")))
+	   (name      (string->symbol (string-append "MPI:alltoallv-" (symbol->string type) "vector"))))
+       `(,%define ,name (make-alltoallv ,vlen ,makev ,simemcpy ,alltoallv)))))
+
+(define-srfi4-alltoallv s8)
+(define-srfi4-alltoallv u8)
+(define-srfi4-alltoallv s16)
+(define-srfi4-alltoallv u16)
+(define-srfi4-alltoallv s32)
+(define-srfi4-alltoallv u32)
+(define-srfi4-alltoallv f32)
+(define-srfi4-alltoallv f64)
+					   
+
+(define MPI:alltoallv-bytevector (make-alltoallv blob-size make-blob bytevector_simemcpy MPI_alltoallv_bytevector))
+
+
+(define (MPI:alltoallv ty data sendlens comm)
+  (let* ((nprocs (MPI:comm-size comm))
+         (tysize (MPI:type-size ty)))
+    ;; Distribute the lengths of the data from all processes
+    (let ((recvlengths (MPI_alltoall_s32vector sendlens 1 (make-s32vector nprocs) 1 comm)))
+      ;; Allocate receive buffer 
+      (let* ((total    (fold + 0 (s32vector->list recvlengths)))
+             (recvbuf  (make-blob (* tysize total))))
+        ;; Distribute the data
+        (MPI_alltoallv_data ty data sendlens recvbuf recvlengths comm
+                            (make-s32vector nprocs) (make-s32vector nprocs)
+                            (make-s32vector nprocs) (make-s32vector nprocs))
+        ;; Build a list of results & return
+        (let loop ((i 0) (offset 0) (lst (list)))
+          (if (< i nprocs)
+              (let* ((len   (s32vector-ref recvlengths i))
+                     (vlen  (* tysize len))
+                     (vect  (make-blob vlen)))
+                (bytevector_simemcpy vect recvbuf vlen offset)
+                (loop (+ 1 i) (+ offset vlen) (cons vect lst)))
+              (reverse lst)))))
+    ))
+        
 
 
 ;; Reduce

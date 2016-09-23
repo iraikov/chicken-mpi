@@ -47,6 +47,6 @@
   `(,(dynld-name "mpi") ,(dynld-name "mpi.import") )
     
   ; Assoc list with properties for your extension:
-  `((version 2.0)
+  `((version 2.1)
     ))
 

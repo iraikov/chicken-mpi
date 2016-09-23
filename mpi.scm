@@ -42,6 +42,7 @@
   MPI:gatherv 
   MPI:allgather
   MPI:alltoall
+  MPI:alltoallv
   
   MPI:broadcast-bytevector
   MPI:scatter-bytevector 
@@ -50,6 +51,7 @@
   MPI:gatherv-bytevector 
   MPI:allgather-bytevector
   MPI:alltoall-bytevector
+  MPI:alltoallv-bytevector
   
   MPI:broadcast-s8vector
   MPI:scatter-s8vector 
@@ -58,6 +60,7 @@
   MPI:gatherv-s8vector 
   MPI:allgather-s8vector
   MPI:alltoall-s8vector
+  MPI:alltoallv-s8vector
   
   MPI:broadcast-u8vector
   MPI:scatter-u8vector 
@@ -66,6 +69,7 @@
   MPI:gatherv-u8vector 
   MPI:allgather-u8vector
   MPI:alltoall-u8vector
+  MPI:alltoallv-u8vector
 
   MPI:broadcast-s16vector
   MPI:scatter-s16vector 
@@ -74,6 +78,7 @@
   MPI:gatherv-s16vector 
   MPI:allgather-s16vector
   MPI:alltoall-s16vector
+  MPI:alltoallv-s16vector
   
   MPI:broadcast-u16vector
   MPI:scatter-u16vector 
@@ -82,6 +87,7 @@
   MPI:gatherv-u16vector 
   MPI:allgather-u16vector
   MPI:alltoall-u16vector
+  MPI:alltoallv-u16vector
   
   MPI:broadcast-s32vector
   MPI:scatter-s32vector 
@@ -90,6 +96,7 @@
   MPI:gatherv-s32vector 
   MPI:allgather-s32vector
   MPI:alltoall-s32vector
+  MPI:alltoallv-s32vector
   
   MPI:broadcast-u32vector
   MPI:scatter-u32vector 
@@ -98,6 +105,7 @@
   MPI:gatherv-u32vector 
   MPI:allgather-u32vector
   MPI:alltoall-u32vector
+  MPI:alltoallv-u32vector
   
   MPI:broadcast-f32vector
   MPI:scatter-f32vector 
@@ -106,6 +114,7 @@
   MPI:gatherv-f32vector 
   MPI:allgather-f32vector
   MPI:alltoall-f32vector
+  MPI:alltoallv-f32vector
   
   MPI:broadcast-f64vector
   MPI:scatter-f64vector 
@@ -114,6 +123,7 @@
   MPI:gatherv-f64vector 
   MPI:allgather-f64vector
   MPI:alltoall-f64vector
+  MPI:alltoallv-f64vector
   
   MPI:reduce-int
   MPI:reduce-flonum
