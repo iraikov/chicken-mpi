@@ -517,7 +517,6 @@ C_word MPI_scatter_data (C_word ty, C_word data, C_word sendcount, C_word recv, 
   vrecv  = C_c_bytevector(recv);
   slen   = (int)C_num_to_int (sendcount);
 
-  printf("MPI_scatter_data: slen = %d\n", slen);
   if (data == C_SCHEME_UNDEFINED)
   {
     MPI_Scatter(NULL, 0, MPI_DATATYPE_NULL, vrecv, slen, Datatype_val(ty), vroot, Comm_val(comm));
@@ -2154,7 +2153,7 @@ C_word MPI_gatherv_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
         (tysize (MPI:type-size ty)))
     (if (not (= root myself))
         ;; If this is not the root process, send the data to the root
-        (if (<= sendcount (/(blob-size v) tysize))
+        (if (<= sendcount (/ (blob-size v) tysize))
             (MPI_gather_data ty v sendcount (void) root comm)
             (error 'MPI:gather "data length is less than sendcount"))
         ;; Otherwise, the root process allocates a buffer and
@@ -2706,6 +2705,650 @@ C_word MPI_allgather_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengt
                 (bytevector_simemcpy vect recv vlen offset)
                 (loop (+ 1 i) (+ offset vlen) (cons vect lst)))
               (reverse lst)))))))
+
+;; All to all
+
+
+;; int MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+;;                 void *recvbuf, int recvcount, MPI_Datatype recvtype,
+;;                 MPI_Comm comm)
+
+#>
+
+
+C_word MPI_alltoall_data (C_word ty, C_word data, C_word sendcount, C_word recv, C_word recvcount, C_word comm)
+{
+  unsigned char *vect, *vrecv; int slen, rlen;
+  C_word result; C_word *ptr;
+
+  MPI_check_comm(comm);
+  C_i_check_bytevector (recv);
+
+  vrecv  = C_c_bytevector(recv);
+  rlen   = (int)C_num_to_int (recvcount);
+
+  C_i_check_bytevector (data);
+  vect  = C_c_bytevector(data);
+  slen   = (int)C_num_to_int (sendcount);
+
+  MPI_Alltoall(vect, slen, Datatype_val(ty), vrecv, rlen, Datatype_val(ty), Comm_val(comm));
+
+  C_return (recv);
+}
+
+
+
+C_word MPI_alltoall_bytevector (C_word data, C_word sendcount, C_word recv, C_word recvcount, C_word comm)
+{
+  unsigned char *vect, *vrecv; int rlen, slen, status;
+  C_word result; C_word *ptr;
+
+  MPI_check_comm(comm);
+  C_i_check_bytevector (recv);
+
+  vrecv  = C_c_bytevector(recv);
+  rlen   = (int)C_num_to_int (recvcount);
+
+  C_i_check_bytevector (data);
+  vect  = C_c_bytevector(data);
+  slen  = (int)C_num_to_int (sendcount);
+  
+  status = MPI_Alltoall(vect, slen, MPI_BYTE, vrecv, rlen, MPI_BYTE, Comm_val(comm));
+
+  C_return (recv);
+}
+
+
+
+C_word MPI_alltoall_u8vector (C_word data, C_word sendcount, C_word recv, C_word recvcount, C_word comm)
+{
+  unsigned char *vect, *vrecv; int rlen, slen;
+  C_word result; C_word *ptr;
+
+  MPI_check_comm(comm);
+
+  vrecv  = C_c_u8vector(recv);
+  rlen   = (int)C_num_to_int (recvcount);
+
+  vect  = C_c_u8vector(data);
+  slen  = (int)C_num_to_int (sendcount);
+  
+  MPI_Altoall(vect, slen, MPI_UNSIGNED_CHAR, vrecv, rlen, MPI_UNSIGNED_CHAR, Comm_val(comm));
+
+  C_return (recv);
+}
+
+
+C_word MPI_alltoall_s8vector (C_word data, C_word sendcount, C_word recv, C_word recvcount, C_word comm)
+{
+  char *vect, *vrecv; int rlen, slen;
+  C_word result; C_word *ptr;
+
+  MPI_check_comm(comm);
+
+  vrecv  = C_c_s8vector(recv);
+  rlen   = (int)C_num_to_int (recvcount);
+
+  vect  = C_c_s8vector(data);
+  slen  = (int)C_num_to_int (sendcount);
+  
+  MPI_Alltoall(vect, slen, MPI_SIGNED_CHAR, vrecv, rlen, MPI_SIGNED_CHAR, Comm_val(comm));
+
+  C_return (recv);
+}
+
+
+
+C_word MPI_alltoall_u16vector (C_word data, C_word sendcount, C_word recv, C_word recvcount, C_word comm)
+{
+  unsigned short *vect, *vrecv; int rlen, slen;
+  C_word result; C_word *ptr;
+
+  MPI_check_comm(comm);
+
+  vrecv  = C_c_u16vector(recv);
+  rlen   = (int)C_num_to_int (recvcount);
+
+  vect  = C_c_u16vector(data);
+  slen  = (int)C_num_to_int (sendcount);
+  
+  MPI_Alltoall(vect, slen, MPI_UNSIGNED_SHORT, vrecv, rlen, MPI_UNSIGNED_SHORT, Comm_val(comm));
+
+  C_return (recv);
+}
+
+
+C_word MPI_alltoall_s16vector (C_word data, C_word sendcount, C_word recv, C_word recvcount, C_word comm)
+{
+  short *vect, *vrecv; int rlen, slen;
+  C_word result; C_word *ptr;
+
+  MPI_check_comm(comm);
+
+  vrecv  = C_c_s16vector(recv);
+  rlen   = (int)C_num_to_int (recvcount);
+
+  vect  = C_c_s16vector(data);
+  slen  = (int)C_num_to_int (sendcount);
+  
+  MPI_Alltoall(vect, slen, MPI_SHORT, vrecv, rlen, MPI_SHORT, Comm_val(comm));
+
+  C_return (recv);
+}
+
+
+
+C_word MPI_alltoall_u32vector (C_word data, C_word sendcount, C_word recv, C_word recvcount, C_word comm)
+{
+  unsigned int *vect, *vrecv; int rlen, slen;
+  C_word result; C_word *ptr;
+
+  MPI_check_comm(comm);
+
+  vrecv  = C_c_u32vector(recv);
+  rlen   = (int)C_num_to_int (recvcount);
+
+  vect  = C_c_u32vector(data);
+  slen  = (int)C_num_to_int (sendcount);
+  
+  MPI_Alltoall(vect, slen, MPI_UNSIGNED, vrecv, rlen, MPI_UNSIGNED, Comm_val(comm));
+
+  C_return (recv);
+}
+
+
+C_word MPI_alltoall_s32vector (C_word data, C_word sendcount, C_word recv, C_word recvcount, C_word comm)
+{
+  int *vect, *vrecv; int rlen, slen;
+  C_word result; C_word *ptr;
+
+  MPI_check_comm(comm);
+
+  vrecv  = C_c_s32vector(recv);
+  rlen   = (int)C_num_to_int (recvcount);
+
+  vect  = C_c_s32vector(data);
+  slen  = (int)C_num_to_int (sendcount);
+  
+  MPI_Alltoall(vect, slen, MPI_INT, vrecv, rlen, MPI_INT, Comm_val(comm));
+
+  C_return (recv);
+}
+
+
+
+C_word MPI_alltoall_f32vector (C_word data, C_word sendcount, C_word recv, C_word recvcount, C_word comm)
+{
+  float *vect, *vrecv; int rlen, slen;
+  C_word result; C_word *ptr;
+
+  MPI_check_comm(comm);
+
+  vrecv  = C_c_f32vector(recv);
+  rlen   = (int)C_num_to_int (recvcount);
+
+  vect  = C_c_f32vector(data);
+  slen  = (int)C_num_to_int (sendcount);
+  
+  MPI_Alltoall(vect, slen, MPI_FLOAT, vrecv, rlen, MPI_FLOAT, Comm_val(comm));
+
+  C_return (recv);
+}
+
+
+
+C_word MPI_alltoall_f64vector (C_word data, C_word sendcount, C_word recv, C_word recvcount, C_word comm)
+{
+  double *vect, *vrecv; int rlen, slen;
+  C_word result; C_word *ptr;
+
+  MPI_check_comm(comm);
+
+  vrecv  = C_c_f64vector(recv);
+  rlen   = (int)C_num_to_int (recvcount);
+
+  vect  = C_c_f64vector(data);
+  slen  = (int)C_num_to_int (sendcount);
+  
+  MPI_Alltoall(vect, slen, MPI_DOUBLE, vrecv, rlen, MPI_DOUBLE, Comm_val(comm));
+
+  C_return (recv);
+}
+
+
+C_word MPI_alltoallv_data (C_word ty, C_word sendbuf, C_word sendlengths, 
+                           C_word recvbuf, C_word recvlengths, C_word comm,
+                           C_word sendcounts, C_word senddispls,
+                           C_word recvcounts, C_word recvdispls)
+{
+  int slen, rlen;
+  int *vsendlengths, *vsendcounts, *vsenddispls;
+  int *vrecvlengths, *vrecvcounts, *vrecvdispls;
+
+  MPI_check_comm (comm);
+  MPI_check_datatype (ty);
+
+  C_i_check_bytevector (recvbuf);
+  C_i_check_bytevector (sendbuf);
+
+  slen          = C_32vector_length(sendlengths);
+  vsendlengths  = C_c_s32vector(sendlengths);
+  vsendcounts   = C_c_s32vector(sendcounts);
+  vsenddispls   = C_c_s32vector(senddispls);
+  MPI_counts_displs(slen, vsendlengths, vsendcounts, vsenddispls);
+
+  rlen          = C_bytevector_length(recvbuf);
+  vrecvlengths  = C_c_s32vector(recvlengths);
+  vrecvcounts   = C_c_s32vector(recvcounts);
+  vrecvdispls   = C_c_s32vector(recvdispls);
+  MPI_counts_displs(rlen, vrecvlengths, vrecvcounts, vrecvdispls);
+
+
+  MPI_Alltoallv(C_c_bytevector(sendbuf), vsendcounts, vsenddispls, Datatype_val(ty),
+                C_c_bytevector(recvbuf), vrecvcounts, vrecvdispls, Datatype_val(ty),
+                Comm_val(comm));
+
+  C_return (recvbuf);
+}
+
+
+C_word MPI_alltoallv_bytevector (C_word sendbuf, C_word sendlengths, 
+			        C_word recvbuf, C_word recvlengths, C_word comm,
+			        C_word sendcounts, C_word senddispls,
+                                C_word recvcounts, C_word recvdispls)
+{
+  int slen, rlen;
+  int *vsendlengths, *vsendcounts, *vsenddispls;
+  int *vrecvlengths, *vrecvcounts, *vrecvdispls;
+
+  MPI_check_comm (comm);
+
+  C_i_check_bytevector (recvbuf);
+
+  C_i_check_bytevector (sendbuf);
+
+  slen          = C_32vector_length(sendlengths);
+  vsendlengths  = C_c_s32vector(sendlengths);
+  vsendcounts   = C_c_s32vector(sendcounts);
+  vsenddispls   = C_c_s32vector(senddispls);
+  MPI_counts_displs(slen, vsendlengths, vsendcounts, vsenddispls);
+  
+  rlen          = C_32vector_length(recvlengths);
+  vrecvlengths  = C_c_s32vector(recvlengths);
+  vrecvcounts   = C_c_s32vector(recvcounts);
+  vrecvdispls   = C_c_s32vector(recvdispls);
+  MPI_counts_displs(rlen, vrecvlengths, vrecvcounts, vrecvdispls);
+  
+  MPI_Alltoallv(C_c_bytevector(sendbuf), vsendcounts, vsenddispls, MPI_BYTE,
+                C_c_bytevector(recvbuf), vrecvcounts, vrecvdispls, MPI_BYTE,
+                Comm_val(comm));
+
+  C_return (recvbuf);
+}
+
+
+
+C_word MPI_alltoallv_u8vector (C_word sendbuf, C_word sendlengths, 
+		 	       C_word recvbuf, C_word recvlengths, C_word comm,
+			       C_word sendcounts, C_word senddispls,
+                               C_word recvcounts, C_word recvdispls)
+{
+  int slen, rlen;
+  int *vsendlengths, *vsendcounts, *vsenddispls;
+  int *vrecvlengths, *vrecvcounts, *vrecvdispls;
+
+  MPI_check_comm (comm);
+
+  slen          = C_32vector_length(sendlengths);
+  vsendlengths  = C_c_s32vector(sendlengths);
+  vsendcounts   = C_c_s32vector(sendcounts);
+  vsenddispls   = C_c_s32vector(senddispls);
+  MPI_counts_displs(slen, vsendlengths, vsendcounts, vsenddispls);
+  
+  rlen          = C_32vector_length(recvlengths);
+  vrecvlengths  = C_c_s32vector(recvlengths);
+  vrecvcounts   = C_c_s32vector(recvcounts);
+  vrecvdispls   = C_c_s32vector(recvdispls);
+  MPI_counts_displs(rlen, vrecvlengths, vrecvcounts, vrecvdispls);
+  
+  MPI_Alltoallv(C_c_u8vector(sendbuf), vsendcounts, vsenddispls, MPI_UNSIGNED_CHAR,
+                C_c_u8vector(recvbuf), vrecvcounts, vrecvdispls, MPI_UNSIGNED_CHAR,
+                Comm_val(comm));
+
+  C_return (recvbuf);
+}
+
+
+C_word MPI_alltoallv_s8vector (C_word sendbuf, C_word sendlengths, 
+			       C_word recvbuf, C_word recvlengths, C_word comm,
+			       C_word sendcounts, C_word senddispls,
+                               C_word recvcounts, C_word recvdispls)
+{
+  int slen, rlen;
+  int *vsendlengths, *vsendcounts, *vsenddispls;
+  int *vrecvlengths, *vrecvcounts, *vrecvdispls;
+
+  MPI_check_comm (comm);
+
+  slen          = C_32vector_length(sendlengths);
+  vsendlengths  = C_c_s32vector(sendlengths);
+  vsendcounts   = C_c_s32vector(sendcounts);
+  vsenddispls   = C_c_s32vector(senddispls);
+  MPI_counts_displs(slen, vsendlengths, vsendcounts, vsenddispls);
+  
+  rlen          = C_32vector_length(recvlengths);
+  vrecvlengths  = C_c_s32vector(recvlengths);
+  vrecvcounts   = C_c_s32vector(recvcounts);
+  vrecvdispls   = C_c_s32vector(recvdispls);
+  MPI_counts_displs(rlen, vrecvlengths, vrecvcounts, vrecvdispls);
+  
+  MPI_Alltoallv(C_c_s8vector(sendbuf), vsendcounts, vsenddispls, MPI_SIGNED_CHAR,
+                C_c_s8vector(recvbuf), vrecvcounts, vrecvdispls, MPI_SIGNED_CHAR,
+                Comm_val(comm));
+
+  C_return (recvbuf);
+}
+
+
+
+
+C_word MPI_alltoallv_u16vector (C_word sendbuf, C_word sendlengths, 
+		  	        C_word recvbuf, C_word recvlengths, C_word comm,
+		  	        C_word sendcounts, C_word senddispls,
+                                C_word recvcounts, C_word recvdispls)
+{
+  int slen, rlen;
+  int *vsendlengths, *vsendcounts, *vsenddispls;
+  int *vrecvlengths, *vrecvcounts, *vrecvdispls;
+
+  MPI_check_comm (comm);
+
+  slen          = C_32vector_length(sendlengths);
+  vsendlengths  = C_c_s32vector(sendlengths);
+  vsendcounts   = C_c_s32vector(sendcounts);
+  vsenddispls   = C_c_s32vector(senddispls);
+  MPI_counts_displs(slen, vsendlengths, vsendcounts, vsenddispls);
+  
+  rlen          = C_32vector_length(recvlengths);
+  vrecvlengths  = C_c_s32vector(recvlengths);
+  vrecvcounts   = C_c_s32vector(recvcounts);
+  vrecvdispls   = C_c_s32vector(recvdispls);
+  MPI_counts_displs(rlen, vrecvlengths, vrecvcounts, vrecvdispls);
+  
+  MPI_Alltoallv(C_c_u16vector(sendbuf), vsendcounts, vsenddispls, MPI_UNSIGNED_SHORT,
+                C_c_u16vector(recvbuf), vrecvcounts, vrecvdispls, MPI_UNSIGNED_SHORT,
+                Comm_val(comm));
+
+  C_return (recvbuf);
+}
+
+
+
+
+C_word MPI_alltoallv_s16vector (C_word sendbuf, C_word sendlengths, 
+		  	        C_word recvbuf, C_word recvlengths, C_word comm,
+		  	        C_word sendcounts, C_word senddispls,
+                                C_word recvcounts, C_word recvdispls)
+{
+  int slen, rlen;
+  int *vsendlengths, *vsendcounts, *vsenddispls;
+  int *vrecvlengths, *vrecvcounts, *vrecvdispls;
+
+  MPI_check_comm (comm);
+
+  slen          = C_32vector_length(sendlengths);
+  vsendlengths  = C_c_s32vector(sendlengths);
+  vsendcounts   = C_c_s32vector(sendcounts);
+  vsenddispls   = C_c_s32vector(senddispls);
+  MPI_counts_displs(slen, vsendlengths, vsendcounts, vsenddispls);
+  
+  rlen          = C_32vector_length(recvlengths);
+  vrecvlengths  = C_c_s32vector(recvlengths);
+  vrecvcounts   = C_c_s32vector(recvcounts);
+  vrecvdispls   = C_c_s32vector(recvdispls);
+  MPI_counts_displs(rlen, vrecvlengths, vrecvcounts, vrecvdispls);
+  
+  MPI_Alltoallv(C_c_s16vector(sendbuf), vsendcounts, vsenddispls, MPI_SHORT,
+                C_c_s16vector(recvbuf), vrecvcounts, vrecvdispls, MPI_SHORT,
+                Comm_val(comm));
+
+  C_return (recvbuf);
+}
+
+
+
+
+
+C_word MPI_alltoallv_u32vector (C_word sendbuf, C_word sendlengths, 
+		  	        C_word recvbuf, C_word recvlengths, C_word comm,
+		  	        C_word sendcounts, C_word senddispls,
+                                C_word recvcounts, C_word recvdispls)
+{
+  int slen, rlen;
+  int *vsendlengths, *vsendcounts, *vsenddispls;
+  int *vrecvlengths, *vrecvcounts, *vrecvdispls;
+
+  MPI_check_comm (comm);
+
+  slen          = C_32vector_length(sendlengths);
+  vsendlengths  = C_c_s32vector(sendlengths);
+  vsendcounts   = C_c_s32vector(sendcounts);
+  vsenddispls   = C_c_s32vector(senddispls);
+  MPI_counts_displs(slen, vsendlengths, vsendcounts, vsenddispls);
+  
+  rlen          = C_32vector_length(recvlengths);
+  vrecvlengths  = C_c_s32vector(recvlengths);
+  vrecvcounts   = C_c_s32vector(recvcounts);
+  vrecvdispls   = C_c_s32vector(recvdispls);
+  MPI_counts_displs(rlen, vrecvlengths, vrecvcounts, vrecvdispls);
+  
+  MPI_Alltoallv(C_c_u32vector(sendbuf), vsendcounts, vsenddispls, MPI_UNSIGNED,
+                C_c_u32vector(recvbuf), vrecvcounts, vrecvdispls, MPI_UNSIGNED,
+                Comm_val(comm));
+
+  C_return (recvbuf);
+}
+
+
+
+
+C_word MPI_alltoallv_s32vector (C_word sendbuf, C_word sendlengths, 
+		  	        C_word recvbuf, C_word recvlengths, C_word comm,
+		  	        C_word sendcounts, C_word senddispls,
+                                C_word recvcounts, C_word recvdispls)
+{
+  int slen, rlen;
+  int *vsendlengths, *vsendcounts, *vsenddispls;
+  int *vrecvlengths, *vrecvcounts, *vrecvdispls;
+
+  MPI_check_comm (comm);
+
+  slen          = C_32vector_length(sendlengths);
+  vsendlengths  = C_c_s32vector(sendlengths);
+  vsendcounts   = C_c_s32vector(sendcounts);
+  vsenddispls   = C_c_s32vector(senddispls);
+  MPI_counts_displs(slen, vsendlengths, vsendcounts, vsenddispls);
+  
+  rlen          = C_32vector_length(recvlengths);
+  vrecvlengths  = C_c_s32vector(recvlengths);
+  vrecvcounts   = C_c_s32vector(recvcounts);
+  vrecvdispls   = C_c_s32vector(recvdispls);
+  MPI_counts_displs(rlen, vrecvlengths, vrecvcounts, vrecvdispls);
+  
+  MPI_Alltoallv(C_c_s32vector(sendbuf), vsendcounts, vsenddispls, MPI_INT,
+                C_c_s32vector(recvbuf), vrecvcounts, vrecvdispls, MPI_INT,
+                Comm_val(comm));
+
+  C_return (recvbuf);
+}
+
+
+
+C_word MPI_alltoallv_f32vector (C_word sendbuf, C_word sendlengths, 
+			        C_word recvbuf, C_word recvlengths, C_word comm,
+			        C_word sendcounts, C_word senddispls,
+                                C_word recvcounts, C_word recvdispls)
+{
+  int slen, rlen;
+  int *vsendlengths, *vsendcounts, *vsenddispls;
+  int *vrecvlengths, *vrecvcounts, *vrecvdispls;
+
+  MPI_check_comm (comm);
+
+  slen          = C_32vector_length(sendlengths);
+  vsendlengths  = C_c_s32vector(sendlengths);
+  vsendcounts   = C_c_s32vector(sendcounts);
+  vsenddispls   = C_c_s32vector(senddispls);
+  MPI_counts_displs(slen, vsendlengths, vsendcounts, vsenddispls);
+  
+  rlen          = C_32vector_length(recvlengths);
+  vrecvlengths  = C_c_s32vector(recvlengths);
+  vrecvcounts   = C_c_s32vector(recvcounts);
+  vrecvdispls   = C_c_s32vector(recvdispls);
+  MPI_counts_displs(rlen, vrecvlengths, vrecvcounts, vrecvdispls);
+  
+  MPI_Alltoallv(C_c_f32vector(sendbuf), vsendcounts, vsenddispls, MPI_FLOAT,
+                C_c_f32vector(recvbuf), vrecvcounts, vrecvdispls, MPI_FLOAT,
+                Comm_val(comm));
+
+  C_return (recvbuf);
+}
+
+
+C_word MPI_alltoallv_f64vector (C_word sendbuf, C_word sendlengths, 
+			        C_word recvbuf, C_word recvlengths, C_word comm,
+			        C_word sendcounts, C_word senddispls,
+                                C_word recvcounts, C_word recvdispls)
+{
+  int slen, rlen;
+  int *vsendlengths, *vsendcounts, *vsenddispls;
+  int *vrecvlengths, *vrecvcounts, *vrecvdispls;
+
+  MPI_check_comm (comm);
+
+  slen          = C_32vector_length(sendlengths);
+  vsendlengths  = C_c_s32vector(sendlengths);
+  vsendcounts   = C_c_s32vector(sendcounts);
+  vsenddispls   = C_c_s32vector(senddispls);
+  MPI_counts_displs(slen, vsendlengths, vsendcounts, vsenddispls);
+  
+  rlen          = C_32vector_length(recvlengths);
+  vrecvlengths  = C_c_s32vector(recvlengths);
+  vrecvcounts   = C_c_s32vector(recvcounts);
+  vrecvdispls   = C_c_s32vector(recvdispls);
+  MPI_counts_displs(rlen, vrecvlengths, vrecvcounts, vrecvdispls);
+  
+  MPI_Alltoallv(C_c_f64vector(sendbuf), vsendcounts, vsenddispls, MPI_DOUBLE,
+                C_c_f64vector(recvbuf), vrecvcounts, vrecvdispls, MPI_DOUBLE,
+                Comm_val(comm));
+
+  C_return (recvbuf);
+}
+
+
+<#
+
+
+(define MPI_alltoall_s8vector (foreign-lambda scheme-object "MPI_alltoall_s8vector" 
+                                              scheme-object scheme-object scheme-object scheme-object 
+                                              scheme-object ))
+
+(define MPI_alltoall_u8vector (foreign-lambda scheme-object "MPI_alltoall_u8vector" 
+                                              scheme-object scheme-object scheme-object scheme-object 
+                                              scheme-object ))
+
+(define MPI_alltoall_s16vector (foreign-lambda scheme-object "MPI_alltoall_s16vector" 
+                                               scheme-object scheme-object scheme-object scheme-object
+                                               scheme-object ))
+
+(define MPI_alltoall_u16vector (foreign-lambda scheme-object "MPI_alltoall_u16vector" 
+                                               scheme-object scheme-object scheme-object scheme-object
+                                               scheme-object ))
+
+(define MPI_alltoall_s32vector (foreign-lambda scheme-object "MPI_alltoall_s32vector" 
+                                               scheme-object scheme-object scheme-object scheme-object
+                                               scheme-object ))
+
+(define MPI_alltoall_u32vector (foreign-lambda scheme-object "MPI_alltoall_u32vector" 
+                                               scheme-object scheme-object scheme-object scheme-object
+                                               scheme-object ))
+
+(define MPI_alltoall_f32vector (foreign-lambda scheme-object "MPI_alltoall_f32vector" 
+                                               scheme-object scheme-object scheme-object scheme-object 
+                                               scheme-object ))
+
+(define MPI_alltoall_f64vector (foreign-lambda scheme-object "MPI_alltoall_f64vector" 
+                                               scheme-object scheme-object scheme-object scheme-object 
+                                               scheme-object ))
+
+(define MPI_alltoall_bytevector (foreign-lambda scheme-object "MPI_alltoall_bytevector" 
+                                                scheme-object scheme-object scheme-object scheme-object
+                                                scheme-object ))
+
+(define MPI_alltoall_data (foreign-lambda scheme-object "MPI_alltoall_data" 
+                                          scheme-object scheme-object scheme-object scheme-object
+                                          scheme-object scheme-object ))
+
+
+(define (make-alltoall vlen makev simemcpy alltoall)
+  (lambda (v n comm)
+    (let ((nprocs (MPI:comm-size comm)))
+      (if (not (= (vlen v) (* nprocs n)))
+          (error 'alltoall "the length of send vector is not equal to nprocs * n"))
+      ;; allocate a buffer and gather the data
+      (let ((recv (makev (* nprocs n))))
+        (alltoall v n recv n comm)
+        ;; Build a list of results & return
+        (let loop ((i 0) (offset 0) (lst (list)))
+          (if (< i nprocs)
+              (let ((vect (makev n)))
+                (simemcpy vect recv n offset)
+                (loop (+ 1 i) (+ offset n) (cons vect lst)))
+              (reverse lst)))))))
+
+
+(define-syntax define-srfi4-alltoall
+  (lambda (x r c)
+    (let* ((type      (cadr x))
+	   (%define   (r 'define))
+	   (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
+	   (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
+	   (simemcpy  (string->symbol (string-append (symbol->string type) "vector_simemcpy")))
+	   (allgather (string->symbol (string-append "MPI_alltoall_" (symbol->string type) "vector")))
+	   (name      (string->symbol (string-append "MPI:alltoall-" (symbol->string type) "vector"))))
+       `(,%define ,name (make-alltoall ,vlen ,makev ,simemcpy ,allgather)))))
+
+
+(define-srfi4-alltoall s8)
+(define-srfi4-alltoall u8)
+(define-srfi4-alltoall s16)
+(define-srfi4-alltoall u16)
+(define-srfi4-alltoall s32)
+(define-srfi4-alltoall u32)
+(define-srfi4-alltoall f32)
+(define-srfi4-alltoall f64)
+					   
+
+(define MPI:alltoall-bytevector (make-alltoall blob-size make-blob bytevector_simemcpy MPI_alltoall_bytevector))
+
+
+(define (MPI:alltoall ty v n comm)
+  (let ((nprocs (MPI:comm-size comm))
+        (tysize (MPI:type-size ty)))
+      (if (not (= (/ (blob-size v) tysize) (* nprocs n)))
+          (error 'alltoall "the length of send vector is not equal to nprocs * n"))
+      ;; allocate a buffer and gather the data
+      (let ((recv (make-blob (* n tysize nprocs))))
+        (MPI_alltoall_data ty v n recv n comm)
+        ;; Build a list of results & return
+        (let ((vlen  (* tysize n)))
+          (let loop ((i 0) (offset 0) (lst (list)))
+            (if (< i nprocs)
+                (let ((vect  (make-blob vlen)))
+                  (bytevector_simemcpy vect recv vlen offset)
+                  (loop (+ 1 i) (+ offset vlen) (cons vect lst)))
+                (reverse lst)))))))
+
 
 ;; Reduce
 
