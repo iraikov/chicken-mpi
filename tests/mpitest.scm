@@ -181,6 +181,28 @@
 (define vvintdata   (list-tabulate size (lambda (i) (list-tabulate (+ i 1) (lambda (j) (+ (* 10 i) j))))))
 (define vvflodata   (list-tabulate size (lambda (i) (list-tabulate (+ i 1) (lambda (j) (+ i (* 0.1 j)))))))
 
+(define allvsdata     (list-tabulate size
+                                      (lambda (i) 
+                                        (list-tabulate vsize
+                                                       (lambda (j) (integer->char (+ myrank i 97)))))))
+(define allvintdata   (list-tabulate size (lambda (i) (list-tabulate vsize (lambda (j) (+ (* 10 (+ myrank i)) j))))))
+(define allvflodata   (list-tabulate size (lambda (i) (list-tabulate vsize (lambda (j) (+ myrank i (* 0.1 j)))))))
+
+(define allvvsdata     (list-tabulate size
+                                      (lambda (i) 
+                                        (list-tabulate (+ i 1)
+                                                       (lambda (j) (integer->char (+ myrank i 97)))))))
+(define allvvintdata   (list-tabulate size (lambda (i) (list-tabulate (+ i 1) (lambda (j) (+ (* 10 (+ myrank i)) j))))))
+(define allvvflodata   (list-tabulate size (lambda (i) (list-tabulate (+ i 1) (lambda (j) (+ myrank i (* 0.1 j)))))))
+
+(define rallvvsdata     (list-tabulate size
+                                       (lambda (i) 
+                                         (list-tabulate (+ myrank 1)
+                                                        (lambda (j) (integer->char (+ myrank i 97)))))))
+(define rallvvintdata   (list-tabulate size (lambda (i) (list-tabulate (+ myrank 1) (lambda (j) (+ (* 10 (+ myrank i)) j))))))
+(define rallvvflodata   (list-tabulate size (lambda (i) (list-tabulate (+ myrank 1) (lambda (j) (+ myrank i (* 0.1 j)))))))
+
+
 (test-group "MPI test 1"
 
   (if (zero? myrank)
@@ -498,6 +520,112 @@
      (test-allgather MPI:allgather-f64vector  (list->f64vector (list-ref vvflodata myrank))
 		   (map list->f64vector vvflodata)))
 )
+
+
+(test-group "MPI test alltoall / alltoallv"
+
+  ;; All to all 
+
+   (let* ((test-alltoall 
+	   (lambda (alltoall data total)
+	     (print myrank ": alltoall " data)
+	     (let ((res (alltoall data vsize comm-world)))
+	       (print myrank ": received (alltoall) " 
+		      (map (lambda (x) (if (blob? x) (blob->string x) x)) res))
+	       (test res total))
+	     (MPI:barrier comm-world))))
+     
+     (test-alltoall MPI:alltoall-bytevector
+                    (string->blob
+                     (list->string
+                      (concatenate allvsdata)))
+                    (map (lambda (lst)
+                           (string->blob
+                            (list->string lst)))
+                         allvsdata))
+
+     (test-alltoall MPI:alltoall-s8vector
+                    (list->s8vector (concatenate allvintdata))
+		   (map list->s8vector allvintdata))
+     (test-alltoall MPI:alltoall-u8vector
+                    (list->u8vector (concatenate allvintdata))
+		   (map list->u8vector allvintdata))
+     (test-alltoall MPI:alltoall-s16vector
+                    (list->s16vector (concatenate allvintdata))
+		   (map list->s16vector allvintdata))
+     (test-alltoall MPI:alltoall-u16vector
+                    (list->u16vector (concatenate allvintdata))
+                    (map list->u16vector allvintdata))
+     (test-alltoall MPI:alltoall-s32vector
+                    (list->s32vector (concatenate allvintdata))
+		   (map list->s32vector allvintdata))
+     (test-alltoall MPI:alltoall-u32vector
+                    (list->u32vector (concatenate allvintdata))
+		   (map list->u32vector allvintdata))
+     (test-alltoall MPI:alltoall-f32vector
+                    (list->f32vector (concatenate allvflodata))
+		   (map list->f32vector allvflodata))
+     (test-alltoall MPI:alltoall-f64vector
+                    (list->f64vector (concatenate allvflodata))
+                    (map list->f64vector allvflodata))
+     )
+   
+   (let* ((test-alltoallv 
+	   (lambda (alltoallv data sendlens total)
+	     (print myrank ": alltoallv " data " " sendlens)
+	     (let ((res (alltoallv data sendlens comm-world)))
+	       (print myrank ": received (alltoallv) " 
+		      (map (lambda (x) (if (blob? x) (blob->string x) x)) res))
+	       (test res total))
+	     (MPI:barrier comm-world))))
+     
+     (test-alltoallv MPI:alltoallv-bytevector
+                     (string->blob
+                      (list->string
+                       (concatenate allvvsdata)))
+                     (list->s32vector (map length allvvsdata))
+                     (map (lambda (lst)
+                            (string->blob
+                             (list->string lst)))
+                          rallvvsdata))
+
+     (test-alltoallv MPI:alltoallv-s8vector
+                     (list->s8vector (concatenate allvvintdata))
+                     (list->s32vector (map length allvvintdata))
+                     (map list->s8vector rallvvintdata))
+     (test-alltoallv MPI:alltoallv-u8vector
+                     (list->u8vector (concatenate allvvintdata))
+                     (list->s32vector (map length allvvintdata))
+                     (map list->u8vector rallvvintdata))
+     (test-alltoallv MPI:alltoallv-s16vector
+                     (list->s16vector (concatenate allvvintdata))
+                     (list->s32vector (map length allvvintdata))
+                     (map list->s16vector rallvvintdata))
+     (test-alltoallv MPI:alltoallv-u16vector
+                     (list->u16vector (concatenate allvvintdata))
+                     (list->s32vector (map length allvvintdata))
+                     (map list->u16vector rallvvintdata))
+     (test-alltoallv MPI:alltoallv-s32vector
+                     (list->s32vector (concatenate allvvintdata))
+                     (list->s32vector (map length allvvintdata))
+                     (map list->s32vector rallvvintdata))
+     (test-alltoallv MPI:alltoallv-u32vector
+                     (list->u32vector (concatenate allvvintdata))
+                     (list->s32vector (map length allvvintdata))
+                     (map list->u32vector rallvvintdata))
+     (test-alltoallv MPI:alltoallv-f32vector
+                     (list->f32vector (concatenate allvvflodata))
+                     (list->s32vector (map length allvvflodata))
+                     (map list->f32vector rallvvflodata))
+     (test-alltoallv MPI:alltoallv-f64vector
+                     (list->f64vector (concatenate allvvflodata))
+                     (list->s32vector (map length allvvflodata))
+                     (map list->f64vector rallvvflodata))
+     
+     )
+
+)
+
 
 
 (test-group "MPI test reduce/reduce all"

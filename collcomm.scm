@@ -1208,7 +1208,6 @@ C_word MPI_scatterv_f64vector (C_word sendbuf, C_word sendlengths,
     (let ((myself (MPI:comm-rank comm))
 	  (nprocs (MPI:comm-size comm))
           (tysize (MPI:type-size ty)))
-      (print "scatter: size v = " (blob-size v))
       (if (= root myself)
 	  ;; If this is the root process, scatter the data
 	  (if (<= (* nprocs sendcount tysize) (blob-size v))
@@ -2772,8 +2771,8 @@ C_word MPI_alltoall_u8vector (C_word data, C_word sendcount, C_word recv, C_word
 
   vect  = C_c_u8vector(data);
   slen  = (int)C_num_to_int (sendcount);
-  
-  MPI_Altoall(vect, slen, MPI_UNSIGNED_CHAR, vrecv, rlen, MPI_UNSIGNED_CHAR, Comm_val(comm));
+
+  MPI_Alltoall(vect, slen, MPI_UNSIGNED_CHAR, vrecv, rlen, MPI_UNSIGNED_CHAR, Comm_val(comm));
 
   C_return (recv);
 }
