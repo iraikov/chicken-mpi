@@ -17,8 +17,9 @@ best MPI library available.
 The Chicken MPI egg provides a Scheme interface to a large subset of
 the MPI 1.2 procedures for communication.  It is based on the Ocaml
 MPI library by Xavier Leroy
-(http://forge.ocamlcore.org/projects/ocamlmpi/). The mpi
-library has been tested with Open MPI versions 1.2.4 - 1.10.1.
+(http://forge.ocamlcore.org/projects/ocamlmpi/). The mpi library has
+been tested with Open MPI versions 1.2.4 - 1.10.1 and MPICH version
+3.2.
 
 ### Initialization and time procedures
 
@@ -340,6 +341,21 @@ object. `TYPE` is one of the following: `int, flonum,
 bytevector, s8vector, u8vector, s16vector, u16vector, s32vector,
 u32vector, f32vector, f64vector`
 
+`MPI:alltoall :: DATATYPE * DATA * SIZE * COMM -> DATA`
+`MPI:alltoall-TYPE :: DATA * SIZE * COMM -> DATA`
+
+Collects data of size `SIZE` from all processes and distributes it to
+all processes. Argument `DATATYPE` is an MPI datatype object. `TYPE`
+is one of the following: `int, flonum, bytevector, s8vector, u8vector,
+s16vector, u16vector, s32vector, u32vector, f32vector, f64vector`
+
+`MPI:alltoallv :: DATATYPE * DATA * SIZEVEC * COMM -> DATA`
+`MPI:alltoall-TYPE :: DATA * SIZEVEC  * COMM -> DATA`
+
+Collects variable length data from all processes and distributes it to
+all processes. Argument `DATATYPE` is an MPI datatype object. `TYPE`
+is one of the following: `int, flonum, bytevector, s8vector, u8vector,
+s16vector, u16vector, s32vector, u32vector, f32vector, f64vector`
 
 
 `MPI:reduce-TYPE :: DATA * OP * ROOT * COMM -> DATA`
@@ -536,6 +552,7 @@ this node.
 
 ## Version history
 
+- 2.0 : Support for MPI alltoall / alltoallv operations
 - 2.0 : Support for MPI derived datatypes
 - 1.14 : Added simple round-robin routines
 - 1.12 : Fixes to allgather-int and allgather-flonum (thanks to Peter Bex)
