@@ -552,7 +552,7 @@ this node.
 
 ## Version history
 
-- 2.0 : Support for MPI alltoall / alltoallv operations
+- 2.1 : Support for MPI alltoall / alltoallv operations
 - 2.0 : Support for MPI derived datatypes
 - 1.14 : Added simple round-robin routines
 - 1.12 : Fixes to allgather-int and allgather-flonum (thanks to Peter Bex)
