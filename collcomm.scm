@@ -3,7 +3,7 @@
 ;; Chicken MPI interface. Based on the Caml/MPI interface by Xavier
 ;; Leroy.
 ;;
-;; Copyright 2007-2016 Ivan Raikov.
+;; Copyright 2007-2018 Ivan Raikov.
 ;;
 ;; This program is free software: you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -306,14 +306,15 @@ C_word MPI_broadcast_f64vector (C_word data, C_word root, C_word comm)
 	    (bcast buffer root comm))))))
 
 (define-syntax define-srfi4-broadcast
-  (lambda (x r c)
-    (let* ((type (cadr x))
-	   (%define (r 'define))
-	   (vlen    (string->symbol (string-append (symbol->string type) "vector-length")))
-	   (makev   (string->symbol (string-append "make-" (symbol->string type) "vector")))
-	   (bcastv  (string->symbol (string-append "MPI_broadcast_" (symbol->string type) "vector")))
-	   (name    (string->symbol (string-append "MPI:broadcast-" (symbol->string type) "vector"))))
-      `(,%define ,name (make-bcast ,vlen ,makev ,bcastv))))) 
+  (er-macro-transformer
+   (lambda (x r c)
+     (let* ((type (cadr x))
+            (%define (r 'define))
+            (vlen    (string->symbol (string-append (symbol->string type) "vector-length")))
+            (makev   (string->symbol (string-append "make-" (symbol->string type) "vector")))
+            (bcastv  (string->symbol (string-append "MPI_broadcast_" (symbol->string type) "vector")))
+            (name    (string->symbol (string-append "MPI:broadcast-" (symbol->string type) "vector"))))
+       `(,%define ,name (make-bcast ,vlen ,makev ,bcastv))))) )
 
 
 (define-srfi4-broadcast s8)
@@ -1183,14 +1184,15 @@ C_word MPI_scatterv_f64vector (C_word sendbuf, C_word sendlengths,
     (MPI_scatter_flonum data root comm)))
 	  
 (define-syntax define-srfi4-scatter
-  (lambda (x r c)
-    (let* ((type     (cadr x))
-	   (%define  (r 'define))
-	   (name     (string->symbol (string-append "MPI:scatter-" (symbol->string type) "vector")))
-	   (makev    (string->symbol (string-append "make-" (symbol->string type) "vector")))
-	   (vlen     (string->symbol (string-append (symbol->string type) "vector-length")))
-	   (scatter  (string->symbol (string-append "MPI_scatter_" (symbol->string type) "vector"))))
-       `(,%define ,name (make-scatter ,makev ,vlen ,scatter)))))
+  (er-macro-transformer
+   (lambda (x r c)
+     (let* ((type     (cadr x))
+            (%define  (r 'define))
+            (name     (string->symbol (string-append "MPI:scatter-" (symbol->string type) "vector")))
+            (makev    (string->symbol (string-append "make-" (symbol->string type) "vector")))
+            (vlen     (string->symbol (string-append (symbol->string type) "vector-length")))
+            (scatter  (string->symbol (string-append "MPI_scatter_" (symbol->string type) "vector"))))
+       `(,%define ,name (make-scatter ,makev ,vlen ,scatter))))))
 
 (define-srfi4-scatter s8)
 (define-srfi4-scatter u8)
@@ -1306,15 +1308,16 @@ C_word MPI_scatterv_f64vector (C_word sendbuf, C_word sendlengths,
 	      myrecv))))))
   
 (define-syntax define-srfi4-scatterv
-  (lambda (x r c)
-    (let* ((type (cadr x))
-	   (%define (r 'define))
-	   (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
-	   (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
-	   (dimemcpy  (string->symbol (string-append (symbol->string type) "vector_dimemcpy")))
-	   (scatterv  (string->symbol (string-append "MPI_scatterv_" (symbol->string type) "vector")))
-	   (name      (string->symbol (string-append "MPI:scatterv-" (symbol->string type) "vector"))))
-      `(,%define ,name (make-scatterv ,vlen ,makev ,dimemcpy ,scatterv)))))
+  (er-macro-transformer
+   (lambda (x r c)
+     (let* ((type (cadr x))
+            (%define (r 'define))
+            (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
+            (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
+            (dimemcpy  (string->symbol (string-append (symbol->string type) "vector_dimemcpy")))
+            (scatterv  (string->symbol (string-append "MPI_scatterv_" (symbol->string type) "vector")))
+            (name      (string->symbol (string-append "MPI:scatterv-" (symbol->string type) "vector"))))
+       `(,%define ,name (make-scatterv ,vlen ,makev ,dimemcpy ,scatterv))))))
 
 (define-srfi4-scatterv s8)
 (define-srfi4-scatterv u8)
@@ -2125,14 +2128,15 @@ C_word MPI_gatherv_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
 
 	  
 (define-syntax define-srfi4-gather
-  (lambda (x r c)
-    (let* ((type      (cadr x))
-	   (%define   (r 'define))
-	   (name      (string->symbol (string-append "MPI:gather-" (symbol->string type) "vector")))
-	   (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
-	   (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
-	   (gather    (string->symbol (string-append "MPI_gather_" (symbol->string type) "vector"))))
-       `(,%define ,name (make-gather ,makev ,vlen ,gather)))))
+  (er-macro-transformer
+   (lambda (x r c)
+     (let* ((type      (cadr x))
+            (%define   (r 'define))
+            (name      (string->symbol (string-append "MPI:gather-" (symbol->string type) "vector")))
+            (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
+            (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
+            (gather    (string->symbol (string-append "MPI_gather_" (symbol->string type) "vector"))))
+       `(,%define ,name (make-gather ,makev ,vlen ,gather))))))
 
 (define-srfi4-gather s8)
 (define-srfi4-gather u8)
@@ -2243,15 +2247,16 @@ C_word MPI_gatherv_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
 
 	  
 (define-syntax define-srfi4-gatherv
-  (lambda (x r c)
-    (let* ((type      (cadr x))
-	   (%define   (r 'define))
-	   (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
-	   (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
-	   (simemcpy  (string->symbol (string-append (symbol->string type) "vector_simemcpy")))
-	   (gatherv   (string->symbol (string-append "MPI_gatherv_" (symbol->string type) "vector")))
-	   (name      (string->symbol (string-append "MPI:gatherv-" (symbol->string type) "vector"))))
-       `(,%define ,name (make-gatherv ,vlen ,makev ,simemcpy ,gatherv)))))
+  (er-macro-transformer
+   (lambda (x r c)
+     (let* ((type      (cadr x))
+            (%define   (r 'define))
+            (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
+            (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
+            (simemcpy  (string->symbol (string-append (symbol->string type) "vector_simemcpy")))
+            (gatherv   (string->symbol (string-append "MPI_gatherv_" (symbol->string type) "vector")))
+            (name      (string->symbol (string-append "MPI:gatherv-" (symbol->string type) "vector"))))
+       `(,%define ,name (make-gatherv ,vlen ,makev ,simemcpy ,gatherv))))))
 
 (define-srfi4-gatherv s8)
 (define-srfi4-gatherv u8)
@@ -2663,15 +2668,16 @@ C_word MPI_allgather_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengt
     (MPI_allgather_flonum send (make-f64vector nprocs 0) comm)))
 	  
 (define-syntax define-srfi4-allgather
-  (lambda (x r c)
-    (let* ((type      (cadr x))
-	   (%define   (r 'define))
-	   (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
-	   (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
-	   (simemcpy  (string->symbol (string-append (symbol->string type) "vector_simemcpy")))
-	   (allgather (string->symbol (string-append "MPI_allgather_" (symbol->string type) "vector")))
-	   (name      (string->symbol (string-append "MPI:allgather-" (symbol->string type) "vector"))))
-       `(,%define ,name (make-allgather ,vlen ,makev ,simemcpy ,allgather)))))
+  (er-macro-transformer
+   (lambda (x r c)
+     (let* ((type      (cadr x))
+            (%define   (r 'define))
+            (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
+            (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
+            (simemcpy  (string->symbol (string-append (symbol->string type) "vector_simemcpy")))
+            (allgather (string->symbol (string-append "MPI_allgather_" (symbol->string type) "vector")))
+            (name      (string->symbol (string-append "MPI:allgather-" (symbol->string type) "vector"))))
+       `(,%define ,name (make-allgather ,vlen ,makev ,simemcpy ,allgather))))))
 
 (define-srfi4-allgather s8)
 (define-srfi4-allgather u8)
@@ -3307,15 +3313,16 @@ C_word MPI_alltoallv_f64vector (C_word sendbuf, C_word sendlengths,
 
 
 (define-syntax define-srfi4-alltoall
-  (lambda (x r c)
-    (let* ((type      (cadr x))
-	   (%define   (r 'define))
-	   (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
-	   (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
-	   (simemcpy  (string->symbol (string-append (symbol->string type) "vector_simemcpy")))
-	   (alltoall  (string->symbol (string-append "MPI_alltoall_" (symbol->string type) "vector")))
-	   (name      (string->symbol (string-append "MPI:alltoall-" (symbol->string type) "vector"))))
-       `(,%define ,name (make-alltoall ,vlen ,makev ,simemcpy ,alltoall)))))
+  (er-macro-transformer
+   (lambda (x r c)
+     (let* ((type      (cadr x))
+            (%define   (r 'define))
+            (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
+            (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
+            (simemcpy  (string->symbol (string-append (symbol->string type) "vector_simemcpy")))
+            (alltoall  (string->symbol (string-append "MPI_alltoall_" (symbol->string type) "vector")))
+            (name      (string->symbol (string-append "MPI:alltoall-" (symbol->string type) "vector"))))
+       `(,%define ,name (make-alltoall ,vlen ,makev ,simemcpy ,alltoall))))))
 
 
 (define-srfi4-alltoall s8)
@@ -3426,15 +3433,16 @@ C_word MPI_alltoallv_f64vector (C_word sendbuf, C_word sendlengths,
 
 	  
 (define-syntax define-srfi4-alltoallv
-  (lambda (x r c)
-    (let* ((type      (cadr x))
-	   (%define   (r 'define))
-	   (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
-	   (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
-	   (simemcpy  (string->symbol (string-append (symbol->string type) "vector_simemcpy")))
-	   (alltoallv (string->symbol (string-append "MPI_alltoallv_" (symbol->string type) "vector")))
-	   (name      (string->symbol (string-append "MPI:alltoallv-" (symbol->string type) "vector"))))
-       `(,%define ,name (make-alltoallv ,vlen ,makev ,simemcpy ,alltoallv)))))
+  (er-macro-transformer
+   (lambda (x r c)
+     (let* ((type      (cadr x))
+            (%define   (r 'define))
+            (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
+            (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
+            (simemcpy  (string->symbol (string-append (symbol->string type) "vector_simemcpy")))
+            (alltoallv (string->symbol (string-append "MPI_alltoallv_" (symbol->string type) "vector")))
+            (name      (string->symbol (string-append "MPI:alltoallv-" (symbol->string type) "vector"))))
+       `(,%define ,name (make-alltoallv ,vlen ,makev ,simemcpy ,alltoallv))))))
 
 (define-srfi4-alltoallv s8)
 (define-srfi4-alltoallv u8)
@@ -3853,14 +3861,15 @@ C_word MPI_reduce_f64vector (C_word data, C_word recv, C_word op, C_word root, C
 
 	  
 (define-syntax define-srfi4-reduce
-  (lambda (x r c)
-    (let* ((type      (cadr x))
-	   (%define   (r 'define))
-	   (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
-	   (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
-	   (reduce    (string->symbol (string-append "MPI_reduce_" (symbol->string type) "vector")))
-	   (name      (string->symbol (string-append "MPI:reduce-" (symbol->string type) "vector"))))
-       `(,%define ,name (make-reduce ,vlen ,makev ,reduce)))))
+  (er-macro-transformer
+   (lambda (x r c)
+     (let* ((type      (cadr x))
+            (%define   (r 'define))
+            (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
+            (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
+            (reduce    (string->symbol (string-append "MPI_reduce_" (symbol->string type) "vector")))
+            (name      (string->symbol (string-append "MPI:reduce-" (symbol->string type) "vector"))))
+       `(,%define ,name (make-reduce ,vlen ,makev ,reduce))))))
 
 (define-srfi4-reduce s8)
 (define-srfi4-reduce u8)
@@ -4119,14 +4128,15 @@ C_word MPI_allreduce_f64vector (C_word data, C_word recv, C_word op, C_word comm
   (MPI_allreduce_flonum send op comm))
 	  
 (define-syntax define-srfi4-allreduce
-  (lambda (x r c)
-    (let* ((type       (cadr x))
-	   (%define    (r 'define))
-	   (vlen       (string->symbol (string-append (symbol->string type) "vector-length")))
-	   (makev      (string->symbol (string-append "make-" (symbol->string type) "vector")))
-	   (allreduce  (string->symbol (string-append "MPI_allreduce_" (symbol->string type) "vector")))
-	   (name       (string->symbol (string-append "MPI:allreduce-" (symbol->string type) "vector"))))
-       `(,%define ,name (make-allreduce ,vlen ,makev ,allreduce)))))
+  (er-macro-transformer
+   (lambda (x r c)
+     (let* ((type       (cadr x))
+            (%define    (r 'define))
+            (vlen       (string->symbol (string-append (symbol->string type) "vector-length")))
+            (makev      (string->symbol (string-append "make-" (symbol->string type) "vector")))
+            (allreduce  (string->symbol (string-append "MPI_allreduce_" (symbol->string type) "vector")))
+            (name       (string->symbol (string-append "MPI:allreduce-" (symbol->string type) "vector"))))
+       `(,%define ,name (make-allreduce ,vlen ,makev ,allreduce))))))
 
 (define-srfi4-allreduce s8)
 (define-srfi4-allreduce u8)
@@ -4386,14 +4396,15 @@ C_word MPI_scan_f64vector (C_word data, C_word recv, C_word op, C_word comm)
 
 	  
 (define-syntax define-srfi4-scan
-  (lambda (x r c)
-    (let* ((type       (cadr x))
-	   (%define    (r 'define))
-	   (vlen       (string->symbol (string-append (symbol->string type) "vector-length")))
-	   (makev      (string->symbol (string-append "make-" (symbol->string type) "vector")))
-	   (scan       (string->symbol (string-append "MPI_scan_" (symbol->string type) "vector")))
-	   (name       (string->symbol (string-append "MPI:scan-" (symbol->string type) "vector"))))
-       `(,%define ,name (make-scan ,vlen ,makev ,scan)))))
+  (er-macro-transformer
+   (lambda (x r c)
+     (let* ((type       (cadr x))
+            (%define    (r 'define))
+            (vlen       (string->symbol (string-append (symbol->string type) "vector-length")))
+            (makev      (string->symbol (string-append "make-" (symbol->string type) "vector")))
+            (scan       (string->symbol (string-append "MPI_scan_" (symbol->string type) "vector")))
+            (name       (string->symbol (string-append "MPI:scan-" (symbol->string type) "vector"))))
+       `(,%define ,name (make-scan ,vlen ,makev ,scan))))))
 
 (define-srfi4-scan s8)
 (define-srfi4-scan u8)

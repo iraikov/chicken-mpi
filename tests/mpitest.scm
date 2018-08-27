@@ -4,7 +4,7 @@
 ;;
 ;; Based on the Caml/MPI interface by Xavier Leroy.
 ;;
-;; Copyright 2007-2016 Ivan Raikov.
+;; Copyright 2007-2018 Ivan Raikov.
 ;;
 ;; This program is free software: you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -20,7 +20,7 @@
 ;; <http://www.gnu.org/licenses/>.
 ;;
 
-(require-extension posix srfi-1 srfi-4 srfi-13 srfi-14 mpi test )
+(import scheme (chicken base) (chicken blob)  srfi-1 srfi-4 srfi-13 srfi-14 mpi test )
 
 (define (land . args)
   (if (null? args) #t
@@ -165,7 +165,8 @@
 (define size        (MPI:comm-size comm-world))
 (define myrank      (MPI:comm-rank comm-world))
 
-(printf "rank ~A: Host ~A size ~A~%" myrank (get-host-name) size)
+;;(printf "rank ~A: Host ~A size ~A~%" myrank (get-host-name) size)
+(printf "rank ~A: size ~A~%" myrank size)
 
 (define vsize       3)
 (define intdata     (list-tabulate size (lambda (i) (* 10 i))))

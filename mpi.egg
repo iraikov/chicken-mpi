@@ -1,0 +1,11 @@
+;; -*- Hen -*-
+
+((synopsis "Message-passing Interface (MPI)")
+ (license "GPL-3")
+ (category net)
+ (dependencies srfi-1)
+ (test-dependencies test srfi-13 srfi-14)
+ (build-dependencies compile-file)
+ (author "Ivan Raikov")
+ (components (extension mpi (custom-build "build.sh")))
+ )

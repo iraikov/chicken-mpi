@@ -3,7 +3,7 @@
 ;; Chicken MPI interface. Based on the Caml/MPI interface by Xavier
 ;; Leroy.
 ;;
-;; Copyright 2007-2016 Ivan Raikov.
+;; Copyright 2007-2018 Ivan Raikov.
 ;;
 ;; This program is free software: you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -569,14 +569,15 @@ C_word MPI_receive_data (C_word ty, int count, C_word data, C_word source, C_wor
 
 
 (define-syntax define-srfi4-receive
-  (lambda (x r c)
-    (let* ((type    (cadr x))
-	   (%define (r 'define))
-	   (makev   (string->symbol (string-append "make-" (symbol->string type) "vector")))
-	   (recv    (string->symbol (string-append "MPI_receive_" (symbol->string type) "vector")))
-	   (name    (string->symbol (string-append "MPI:receive-" (symbol->string type) "vector")))
-	   (ty      (string->symbol (string-append "MPI:type-" (symbol->string type)))))
-       `(,%define ,name (make-receive ,ty ,makev ,recv)))))
+  (er-macro-transformer
+   (lambda (x r c)
+     (let* ((type    (cadr x))
+            (%define (r 'define))
+            (makev   (string->symbol (string-append "make-" (symbol->string type) "vector")))
+            (recv    (string->symbol (string-append "MPI_receive_" (symbol->string type) "vector")))
+            (name    (string->symbol (string-append "MPI:receive-" (symbol->string type) "vector")))
+            (ty      (string->symbol (string-append "MPI:type-" (symbol->string type)))))
+       `(,%define ,name (make-receive ,ty ,makev ,recv))))))
 
 (define-srfi4-receive s8)
 (define-srfi4-receive u8)

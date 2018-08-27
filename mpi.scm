@@ -4,7 +4,7 @@
 ;; Leroy.
 ;;
 ;;
-;; Copyright 2007-2016 Ivan Raikov.
+;; Copyright 2007-2018 Ivan Raikov.
 ;;
 ;; This program is free software: you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -262,7 +262,9 @@
   MPI-rr-fold MPI-rr-foldi MPI-rr-map MPI-rr-for-each
   )
 		   
- (import scheme chicken foreign srfi-1 srfi-4 data-structures)
+ (import scheme (chicken base) (chicken foreign) (chicken blob)
+         (only (chicken string) ->string)
+         srfi-1 srfi-4)
 
 #>
 #include "chicken-mpi.h"

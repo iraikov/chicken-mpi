@@ -40,6 +40,17 @@ static const C_header MPI_DATATYPE_TAG =
 #define Datatype_val(x) (C_c_pointer_nn(x))
 
 
+typedef struct chicken_MPI_window_struct {
+     C_header tag;
+     MPI_Win *window_data;
+} chicken_MPI_window_t;
+
+static const C_header MPI_WINDOW_TAG = 
+     ((sizeof(chicken_MPI_window_t) - sizeof(C_header)) / sizeof(C_word)) | C_POINTER_TYPE;
+
+#define Window_val(x) (C_c_pointer_nn(x))
+
+
 #define C_8vector_length(x)         (C_header_size(C_block_item(x, 1)))
 #define C_16vector_length(x)        (C_header_size(C_block_item(x, 1)) >> 1)
 #define C_32vector_length(x)        (C_header_size(C_block_item(x, 1)) >> 2)

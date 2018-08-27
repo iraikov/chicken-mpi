@@ -16,13 +16,15 @@
 ;; <http://www.gnu.org/licenses/>.
 ;;
 
-(use posix files setup-api)
+(import (chicken pathname) (chicken process-context))
 
 (define prefix (pathname-directory (program-name)))
 
-(if (not (and (zero? (system (conc "mpirun -np 32 "  (find-program 'csi) " -s " 
+(define csi (or (get-environment-variable "CHICKEN_CSI") "csi"))
+
+(if (not (and (zero? (system (conc "mpirun -np 32 "  csi " -s " 
                                    (make-pathname prefix  "datatest.scm"))))
-              (zero? (system (conc "mpirun -np 32 "  (find-program 'csi) " -s " 
+              (zero? (system (conc "mpirun -np 32 "  csi " -s " 
                                    (make-pathname prefix  "mpitest.scm"))))))
               
     (exit 1))

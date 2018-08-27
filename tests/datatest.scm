@@ -1,5 +1,5 @@
 
-(require-extension lolevel posix srfi-1 srfi-4 srfi-13 srfi-14 mpi test)
+(import scheme (chicken base) (chicken blob) (chicken memory) srfi-1 srfi-4 srfi-13 srfi-14 mpi test)
 
 (define (blob-range x i j) 
   (string->blob (string-copy (blob->string x) i j)))
@@ -15,7 +15,7 @@
 
 (MPI:init)
 
-(print "Host " (get-host-name))
+;(print "Host " (get-host-name))
 
 (define comm-world  (MPI:get-comm-world))
 (define size        (MPI:comm-size comm-world))
