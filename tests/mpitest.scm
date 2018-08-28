@@ -20,7 +20,8 @@
 ;; <http://www.gnu.org/licenses/>.
 ;;
 
-(import scheme (chicken base) (chicken blob)  srfi-1 srfi-4 srfi-13 srfi-14 mpi test )
+(import scheme (chicken base) (chicken blob) (chicken pretty-print) (chicken format)
+        srfi-1 srfi-4 srfi-13 srfi-14 mpi test )
 
 (define (land . args)
   (if (null? args) #t

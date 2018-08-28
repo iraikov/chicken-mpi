@@ -16,7 +16,8 @@
 ;; <http://www.gnu.org/licenses/>.
 ;;
 
-(import (chicken pathname) (chicken process-context))
+(import scheme (chicken base) (chicken pathname) (chicken string)
+        (chicken process) (chicken process-context))
 
 (define prefix (pathname-directory (program-name)))
 

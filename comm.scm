@@ -40,15 +40,18 @@ static C_word MPI_comm_p(C_word obj)
 
 static C_word MPI_check_comm (C_word obj) 
 {
-  if (C_immediatep(obj)) 
-  {
-    chicken_MPI_exception (MPI_ERR_COMM, 32, "invalid MPI communicator object");
-  } else if (C_block_header(obj) == MPI_COMM_TAG) 
-  {
-    return C_SCHEME_UNDEFINED;
-  } else {
-    chicken_MPI_exception (MPI_ERR_COMM, 32, "invalid MPI communicator object");
-  }
+ if (C_immediatep(obj)) 
+    {
+     chicken_MPI_exception (MPI_ERR_COMM, "MPI_check_comm",
+                                          32, "invalid MPI communicator object");
+    } else if (C_block_header(obj) == MPI_COMM_TAG) 
+      {
+       return C_SCHEME_UNDEFINED;
+      } else
+      {
+         chicken_MPI_exception (MPI_ERR_COMM, "MPI_check_comm",
+                                              32, "invalid MPI communicator object");
+      }
 }
 
 <#

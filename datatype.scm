@@ -44,12 +44,14 @@ static C_word MPI_check_datatype (C_word obj)
 {
   if (C_immediatep(obj)) 
   {
-    chicken_MPI_exception (MPI_ERR_COMM, 32, "invalid MPI datatype object");
+   chicken_MPI_exception (MPI_ERR_COMM, "MPI_check_datatype",
+                          32, "invalid MPI datatype object");
   } else if (C_block_header(obj) == MPI_DATATYPE_TAG) 
   {
     return C_SCHEME_UNDEFINED;
   } else {
-    chicken_MPI_exception (MPI_ERR_COMM, 32, "invalid MPI datatype object");
+          chicken_MPI_exception (MPI_ERR_COMM, "MPI_check_datatype",
+                                 32, "invalid MPI datatype object");
   }
 }
 
@@ -348,7 +350,8 @@ END
 
   if (!(fieldcount > 0))
   {
-    chicken_MPI_exception (MPI_ERR_TYPE, 32, "invalid MPI struct datatype size");
+   chicken_MPI_exception (MPI_ERR_TYPE, "MPI:make-type-struct",
+                                        32, "invalid MPI struct datatype size");
   }
 
   array_of_blocklens = malloc(fieldcount*sizeof(int));
@@ -376,7 +379,8 @@ END
 
      if (status != MPI_SUCCESS) 
      {
-        chicken_MPI_exception (MPI_ERR_TYPE, 20, "invalid MPI datatype");
+      chicken_MPI_exception (MPI_ERR_TYPE, "MPI:make-type-struct",
+                                           20, "invalid MPI datatype");
      }
      
      array_of_displs[i] = array_of_displs[i-1] + fldtysize * array_of_blocklens[i-1];
@@ -391,14 +395,16 @@ END
 
   if (status != MPI_SUCCESS) 
   {
-    chicken_MPI_exception (MPI_ERR_TYPE, 26, "invalid MPI struct datatype");
+   chicken_MPI_exception (MPI_ERR_TYPE, "MPI:make-type-struct",
+                                        26, "invalid MPI struct datatype");
   }
 
   status = MPI_Type_commit(&newtype);
 
   if (status != MPI_SUCCESS) 
   {
-    chicken_MPI_exception (MPI_ERR_TYPE, 27, "invalid MPI datatype commit");
+   chicken_MPI_exception (MPI_ERR_TYPE, "MPI:make-type-struct",
+                                         27, "invalid MPI datatype commit");
   }
 
   newdatatype.tag = MPI_DATATYPE_TAG;
@@ -427,7 +433,7 @@ EOF
 
   if (status != MPI_SUCCESS) 
   {
-    chicken_MPI_exception (MPI_ERR_TYPE, 20, "invalid MPI datatype");
+    chicken_MPI_exception (MPI_ERR_TYPE, "MPI:type-extent", 20, "invalid MPI datatype");
   }
 
   result[0] = (int)extent;
@@ -456,7 +462,7 @@ EOF
 
   if (status != MPI_SUCCESS) 
   {
-    chicken_MPI_exception (MPI_ERR_TYPE, 20, "invalid MPI datatype");
+    chicken_MPI_exception (MPI_ERR_TYPE, "MPI:type-size", 20, "invalid MPI datatype");
   }
 
   result = (int)size;

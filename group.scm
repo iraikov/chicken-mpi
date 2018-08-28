@@ -40,12 +40,14 @@ static C_word MPI_check_group (C_word obj)
 {
   if (C_immediatep(obj)) 
   {
-    chicken_MPI_exception (MPI_ERR_COMM, 32, "invalid MPI group object");
+   chicken_MPI_exception (MPI_ERR_COMM, "MPI_check_group",
+                          32, "invalid MPI group object");
   } else if (C_block_header(obj) == MPI_GROUP_TAG) 
   {
     return C_SCHEME_UNDEFINED;
   } else {
-    chicken_MPI_exception (MPI_ERR_COMM, 32, "invalid MPI group object");
+          chicken_MPI_exception (MPI_ERR_COMM, "MPI_check_group",
+                                 32, "invalid MPI group object");
   }
 }
 

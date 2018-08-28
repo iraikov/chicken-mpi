@@ -32,37 +32,39 @@ static void chicken_Panic (C_char *msg)
   exit (5); /* should never get here */
 }
 
-static void chicken_ThrowException(C_word value) C_noret;
-static void chicken_ThrowException(C_word value)
+static void chicken_ThrowException(C_word value, C_word loc) C_noret;
+static void chicken_ThrowException(C_word value, C_word loc)
 {
-  char *aborthook = C_text("\003sysabort");
+  char *aborthook = C_text("\003syserror-hook");
 
   C_word *a = C_alloc(C_SIZEOF_STRING(strlen(aborthook)));
   C_word abort = C_intern2(&a, aborthook);
 
   abort = C_block_item(abort, 0);
   if (C_immediatep(abort))
-    chicken_Panic(C_text("`##sys#abort' is not defined"));
+    chicken_Panic(C_text("`##sys#error-hook' is not defined"));
 
 #if defined(C_BINARY_VERSION) && (C_BINARY_VERSION >= 8)
-  C_word rval[3] = { abort, C_SCHEME_UNDEFINED, value };
-  C_do_apply(3, rval);
+  C_word rval[4] = { abort, C_SCHEME_UNDEFINED, value, loc };
+  C_do_apply(4, rval);
 #else
   C_save(value);
   C_do_apply(1, abort, C_SCHEME_UNDEFINED);
 #endif
 }
 
-void chicken_MPI_exception (int code, int msglen, const char *msg) 
+void chicken_MPI_exception (int code, const char *loc, int msglen, const char *msg) 
 {
   C_word *a;
-  C_word scmmsg;
+  C_word scmmsg, scmloc;
   C_word list;
 
   a = C_alloc (C_SIZEOF_STRING (msglen) + C_SIZEOF_LIST(2));
   scmmsg = C_string2 (&a, (char *) msg);
   list = C_list(&a, 2, C_fix(code), scmmsg);
-  chicken_ThrowException(list);
+  a = C_alloc (C_SIZEOF_STRING (strlen(loc)));
+  scmloc = C_string2 (&a, (char *) loc);
+  chicken_ThrowException(list, scmloc);
 }
 
 static void MPI_error_handler(MPI_Comm * comm, int * errcode, ...)
@@ -72,7 +74,7 @@ static void MPI_error_handler(MPI_Comm * comm, int * errcode, ...)
 
   MPI_Error_string(*errcode, errmsg, &resultlen);
 
-  chicken_MPI_exception (*errcode, resultlen, errmsg);
+  chicken_MPI_exception (*errcode, "mpi", resultlen, errmsg);
 }
 <#
 
