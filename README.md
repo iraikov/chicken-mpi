@@ -422,7 +422,7 @@ this node.
 ;; Can be run as follows: mpirun -np 4 csi -s master-worker.scm
 ;; where -np # indicates the number of processes
 
-(use srfi-4 mpi)
+(import scheme (chicken base) srfi-4 mpi)
 
 (MPI:init)
 
@@ -484,7 +484,7 @@ this node.
 ;; Master/worker example implemented with collective operations
 ;; Can be run as follows: mpirun -np 4 csi -s master-worker.scm
 
-(use srfi-1 srfi-4 mpi)
+(import scheme (chicken base) srfi-1 srfi-4 mpi)
 
 (MPI:init)
 
@@ -552,6 +552,7 @@ this node.
 
 ## Version history
 
+- 2.2 : Ported to CHICKEN 5
 - 2.1 : Support for MPI alltoall / alltoallv operations
 - 2.0 : Support for MPI derived datatypes
 - 1.14 : Added simple round-robin routines
@@ -569,7 +570,7 @@ this node.
 ## License
 
 >
-> Copyright 2007-2016 Ivan Raikov
+> Copyright 2007-2018 Ivan Raikov
 > 
 > Based on the Ocaml MPI library by Xavier Leroy. 
 > 
