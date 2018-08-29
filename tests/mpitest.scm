@@ -187,23 +187,22 @@
                                       (lambda (i) 
                                         (list-tabulate vsize
                                                        (lambda (j) (integer->char (+ myrank i 97)))))))
-(define allvintdata   (list-tabulate size (lambda (i) (list-tabulate vsize (lambda (j) (+ (* 10 (+ myrank i)) j))))))
+(define allvintdata   (list-tabulate size (lambda (i) (list-tabulate vsize (lambda (j) (+ (+ myrank i)) j)))))
 (define allvflodata   (list-tabulate size (lambda (i) (list-tabulate vsize (lambda (j) (+ myrank i (* 0.1 j)))))))
 
 (define allvvsdata     (list-tabulate size
                                       (lambda (i) 
                                         (list-tabulate (+ i 1)
                                                        (lambda (j) (integer->char (+ myrank i 97)))))))
-(define allvvintdata   (list-tabulate size (lambda (i) (list-tabulate (+ i 1) (lambda (j) (+ (* 10 (+ myrank i)) j))))))
+(define allvvintdata   (list-tabulate size (lambda (i) (list-tabulate (+ i 1) (lambda (j) (+ (+ myrank i)) j)))))
 (define allvvflodata   (list-tabulate size (lambda (i) (list-tabulate (+ i 1) (lambda (j) (+ myrank i (* 0.1 j)))))))
 
 (define rallvvsdata     (list-tabulate size
                                        (lambda (i) 
                                          (list-tabulate (+ myrank 1)
                                                         (lambda (j) (integer->char (+ myrank i 97)))))))
-(define rallvvintdata   (list-tabulate size (lambda (i) (list-tabulate (+ myrank 1) (lambda (j) (+ (* 10 (+ myrank i)) j))))))
+(define rallvvintdata   (list-tabulate size (lambda (i) (list-tabulate (+ myrank 1) (lambda (j) (+ (+ myrank i)) j)))))
 (define rallvvflodata   (list-tabulate size (lambda (i) (list-tabulate (+ myrank 1) (lambda (j) (+ myrank i (* 0.1 j)))))))
-
 
 (test-group "MPI test 1"
 
@@ -321,7 +320,7 @@
 )
 
 
-(begin
+#;(begin
   (if (positive? myrank)
       (sleep myrank))
   (print myrank ": hitting barrier")
@@ -523,7 +522,8 @@
 		   (map list->f64vector vvflodata)))
 )
 
-
+(if (= myrank (- size 1))
+    (print "allvintdata: " allvintdata))
 (test-group "MPI test alltoall / alltoallv"
 
   ;; All to all 
@@ -546,12 +546,12 @@
                             (list->string lst)))
                          allvsdata))
 
-     (test-alltoall MPI:alltoall-s8vector
-                    (list->s8vector (concatenate allvintdata))
-		   (map list->s8vector allvintdata))
      (test-alltoall MPI:alltoall-u8vector
                     (list->u8vector (concatenate allvintdata))
 		   (map list->u8vector allvintdata))
+     (test-alltoall MPI:alltoall-s8vector
+                    (list->s8vector (concatenate allvintdata))
+		   (map list->s8vector allvintdata))
      (test-alltoall MPI:alltoall-s16vector
                     (list->s16vector (concatenate allvintdata))
 		   (map list->s16vector allvintdata))

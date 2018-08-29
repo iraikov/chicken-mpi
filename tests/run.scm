@@ -21,11 +21,13 @@
 
 (define prefix (pathname-directory (program-name)))
 
+(define mpirun (or (get-environment-variable "MPIRUN") "mpirun"))
 (define csi (or (get-environment-variable "CHICKEN_CSI") "csi"))
 
-(if (not (and (zero? (system (conc "mpirun -np 32 "  csi " -s " 
+(if (not (and (zero? (system (conc mpirun " -np 8 "  csi " -s " 
                                    (make-pathname prefix  "datatest.scm"))))
-              (zero? (system (conc "mpirun -np 32 "  csi " -s " 
-                                   (make-pathname prefix  "mpitest.scm"))))))
+              (zero? (system (conc mpirun" -np 8 "  csi " -s " 
+                                   (make-pathname prefix  "mpitest.scm"))))
+              ))
               
     (exit 1))
