@@ -1,0 +1,29 @@
+name: Chicken Scheme CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-chicken@v1
+      with:
+        chicken-version: '5.2.0'
+
+    - name: Install dependencies
+      run: |
+        apt-get update -y
+        apt-get install openmpi-bin libopenmpi-dev
+        cabal update
+        cabal build --only-dependencies --enable-tests --enable-benchmarks
+    - name: Build
+      run: cabal build --enable-tests --enable-benchmarks all
+    - name: Run tests
+      run: cabal test all
