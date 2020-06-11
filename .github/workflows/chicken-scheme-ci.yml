@@ -19,8 +19,8 @@ jobs:
         version: '5.2.0'
     - name: Install dependencies
       run: |
-        apt-get update -y
-        apt-get install openmpi-bin libopenmpi-dev
+        sudo apt-get update -y
+        sudo apt-get install openmpi-bin libopenmpi-dev
     - name: Build
       run: sudo /usr/local/bin/chicken-install
     - name: Run tests
