@@ -7,23 +7,39 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  build-linux:
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/setup-chicken@v1
+    - uses: iraikov/setup-scheme@master
       with:
+        implementation: 'chicken'
         chicken-version: '5.2.0'
-
     - name: Install dependencies
       run: |
         apt-get update -y
         apt-get install openmpi-bin libopenmpi-dev
-        cabal update
-        cabal build --only-dependencies --enable-tests --enable-benchmarks
     - name: Build
-      run: cabal build --enable-tests --enable-benchmarks all
+      run: sudo /usr/local/bin/chicken-install .
     - name: Run tests
-      run: cabal test all
+      run: CHICKEN_CSI=/usr/local/bin/csi /usr/local/bin/csi -s tests/run.scm
+
+  build-macos:
+
+    runs-on: macos
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: iraikov/setup-scheme@master
+      with:
+        implementation: 'chicken'
+        chicken-version: '5.2.0'
+    - name: Install dependencies
+      run: |
+        brew install open-mpi
+    - name: Build
+      run: sudo /usr/local/bin/chicken-install .
+    - name: Run tests
+      run: CHICKEN_CSI=/usr/local/bin/csi /usr/local/bin/csi -s tests/run.scm
