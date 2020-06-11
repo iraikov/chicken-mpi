@@ -16,7 +16,7 @@ jobs:
     - uses: iraikov/setup-scheme@master
       with:
         implementation: 'chicken'
-        chicken-version: '5.2.0'
+        version: '5.2.0'
     - name: Install dependencies
       run: |
         apt-get update -y
@@ -28,14 +28,14 @@ jobs:
 
   build-macos:
 
-    runs-on: macos
+    runs-on: macOS-latest
 
     steps:
     - uses: actions/checkout@v2
     - uses: iraikov/setup-scheme@master
       with:
         implementation: 'chicken'
-        chicken-version: '5.2.0'
+        version: '5.2.0'
     - name: Install dependencies
       run: |
         brew install open-mpi
