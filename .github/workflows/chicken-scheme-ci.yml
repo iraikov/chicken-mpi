@@ -21,6 +21,7 @@ jobs:
       run: |
         sudo apt-get update -y
         sudo apt-get install openmpi-bin libopenmpi-dev
+        sudo /usr/local/bin/chicken-install test
     - name: Build
       run: sudo /usr/local/bin/chicken-install
     - name: Run tests
@@ -39,6 +40,7 @@ jobs:
     - name: Install dependencies
       run: |
         brew install open-mpi
+        sudo /usr/local/bin/chicken-install test
     - name: Build
       run: sudo /usr/local/bin/chicken-install
     - name: Run tests

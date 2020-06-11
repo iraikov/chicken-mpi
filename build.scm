@@ -37,4 +37,5 @@
 
 (define cmd (intersperse (append args (list (sprintf "-L \"~A\"" (car ld+cpp-options)) 
                                             (sprintf "\"~A\"" (cdr ld+cpp-options)))) " "))
+(print (string-concatenate cmd))
 (system (string-concatenate cmd))
