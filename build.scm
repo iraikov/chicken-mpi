@@ -1,5 +1,5 @@
 
-(import (chicken base) (chicken format) (chicken process) (chicken process-context) srfi-13 compile-file)
+(import (chicken base) (chicken format) (chicken process) (chicken process-context) srfi-1 srfi-13 compile-file)
 (define args (command-line-arguments))
 
 (define (mpi-try-compile header ldflags cppflags)
@@ -35,7 +35,8 @@
    (mpi-test ("#include <mpi.h>" "-lmpi" "-I/usr/lib/openmpi/include"))
    (error "unable to figure out location of MPI library; try setting environment variable MPI_DIR to the proper location")))
 
-(define cmd (intersperse (append args (list (sprintf "-L \"~A\"" (car ld+cpp-options)) 
-                                            (sprintf "\"~A\"" (cdr ld+cpp-options)))) " "))
+(define cmd (intersperse (append args (filter (lambda (x) (and (> (string-length x) 0) x))
+                                              (list (sprintf "-L \"~A\"" (car ld+cpp-options)) 
+                                                    (sprintf "\"~A\"" (cdr ld+cpp-options))))) " "))
 (print (string-concatenate cmd))
 (system (string-concatenate cmd))
