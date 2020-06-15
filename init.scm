@@ -279,7 +279,7 @@ EOF
        free (argv);
      }
      #if MPI_VERSION >= 3
-       MPI_Comm_create_errhandler((MPI_Handler_function *)MPI_error_handler, &hdlr);
+       MPI_Comm_create_errhandler((MPI_Comm_errhandler_function *)MPI_error_handler, &hdlr);
        MPI_Comm_set_errhandler(MPI_COMM_WORLD, hdlr);
      #else  
        MPI_Errhandler_create((MPI_Handler_function *)MPI_error_handler, &hdlr);
