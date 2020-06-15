@@ -35,8 +35,10 @@
    (mpi-test ("#include <mpi.h>" "-lmpi" "-I/usr/lib/openmpi/include"))
    (error "unable to figure out location of MPI library; try setting environment variable MPI_DIR to the proper location")))
 
-(define cmd (intersperse (append args (filter (lambda (x) (and (> (string-length x) 0) x))
-                                              (list (sprintf "-L \"~A\"" (car ld+cpp-options)) 
-                                                    (sprintf "\"~A\"" (cdr ld+cpp-options))))) " "))
+(define cmd (intersperse (append args (filter (lambda (x) x)
+                                              (list (sprintf "-L \"~A\"" (car ld+cpp-options))
+                                                    (and (> (string-length (cdr ld+cpp-options)) 0)
+                                                         (sprintf "\"~A\"" (cdr ld+cpp-options))))))
+                                 " "))
 (print (string-concatenate cmd))
 (system (string-concatenate cmd))
