@@ -570,7 +570,7 @@ this node.
 ## License
 
 >
-> Copyright 2007-2018 Ivan Raikov
+> Copyright 2007-2020 Ivan Raikov
 > 
 > Based on the Ocaml MPI library by Xavier Leroy. 
 > 
