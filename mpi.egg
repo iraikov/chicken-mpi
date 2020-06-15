@@ -5,7 +5,7 @@
  (category net)
  (dependencies srfi-1 srfi-13 srfi-14)
  (test-dependencies test)
- (build-dependencies compile-file)
+ (build-dependencies srfi-1 compile-file)
  (author "Ivan Raikov")
  (components (extension mpi (custom-build "build.sh")))
  )
