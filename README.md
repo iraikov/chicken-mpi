@@ -552,6 +552,7 @@ this node.
 
 ## Version history
 
+- 2.4 : Compatibility with Mac OS X (thanks to Ivan Avalos) and MPI 3
 - 2.2 : Ported to CHICKEN 5
 - 2.1 : Support for MPI alltoall / alltoallv operations
 - 2.0 : Support for MPI derived datatypes
