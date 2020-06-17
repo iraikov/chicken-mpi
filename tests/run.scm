@@ -26,7 +26,7 @@
 
 (if (not (and (zero? (system (conc mpirun " -np 8 "  csi " -s " 
                                    (make-pathname prefix  "datatest.scm"))))
-              (zero? (system (conc mpirun" -np 8 "  csi " -s " 
+              (zero? (system (conc mpirun " -np 8 "  csi " -s " 
                                    (make-pathname prefix  "mpitest.scm"))))
               ))
               
