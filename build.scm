@@ -1,5 +1,5 @@
 
-(import (chicken base) (chicken format) (chicken process) (chicken process-context) srfi-1 srfi-13 compile-file)
+(import (chicken base) (chicken format) (chicken process) (chicken process-context) (chicken pathname) srfi-1 srfi-13 compile-file)
 (define args (command-line-arguments))
 
 (define (mpi-try-compile header ldflags cppflags)
@@ -15,30 +15,38 @@
 
 (define-syntax mpi-test 
   (syntax-rules ()
-    ((_ (flags ...))
-     (condition-case (mpi-try-compile flags ...)
+    ((_ (header flags ...))
+     (condition-case (mpi-try-compile header flags ...)
 		     (t ()    #f)))))
 
 (define mpi-dir (get-environment-variable "MPI_DIR"))
 
 (define ld+cpp-options
   (or 
-   (and mpi-dir (mpi-test ("#include <mpi.h>" 
-			   (sprintf "-lmpi -L~S" (make-pathname mpi-dir "lib") )
-			   (sprintf "-I~S -L~S" 
-				    (make-pathname mpi-dir "include") 
-				    (make-pathname mpi-dir "lib") ))
-			  ))
+   (and mpi-dir (let ((ldflags (sprintf "-lmpi -L~S" (make-pathname mpi-dir "lib") ))
+                      (cppflags  (sprintf "-I~S -L~S" 
+                                          (make-pathname mpi-dir "include") 
+                                          (make-pathname mpi-dir "lib") )))
+                  (mpi-test ("#include <mpi.h>" ldflags cppflags))))
    (mpi-test ("#include <mpi.h>" "-lmpi" ""))
+   (mpi-test ("#include <mpi.h>" "-lmpich" "-I/usr/lib/x86_64-linux-gnu/mpich/include -L/usr/lib/x86_64-linux-gnu/mpich/lib"))
+   (mpi-test ("#include <mpi.h>" "-lmpi" "-I/usr/lib/x86_64-linux-gnu/openmpi/include -L/usr/lib/x86_64-linux-gnu/openmpi/lib"))
    (mpi-test ("#include <mpi.h>" "-lmpich" "-I/usr/include/mpich"))
    (mpi-test ("#include <mpi.h>" "-lmpi" "-I/usr/include/mpi"))
    (mpi-test ("#include <mpi.h>" "-lmpi" "-I/usr/lib/openmpi/include"))
-   (error "unable to figure out location of MPI library; try setting environment variable MPI_DIR to the proper location")))
+   (error (if mpi-dir
+              (sprintf "unable to detect MPI library in ~S" mpi-dir)
+              "unable to figure out location of MPI library; try setting environment variable MPI_DIR to the proper location"))
+   )
+  )
 
-(define cmd (intersperse (append args (filter (lambda (x) x)
-                                              (list (sprintf "-L \"~A\"" (car ld+cpp-options))
-                                                    (and (> (string-length (cdr ld+cpp-options)) 0)
-                                                         (sprintf "\"~A\"" (cdr ld+cpp-options))))))
-                                 " "))
+(define ld-options (car ld+cpp-options))
+(define c-options  (cdr ld+cpp-options))
+
+(define cmd (intersperse
+             (append args (list (sprintf "-L \"~A\"" ld-options)
+                                (sprintf "-C \"~A\"" c-options)))
+             " "))
+
 (print (string-concatenate cmd))
 (system (string-concatenate cmd))
