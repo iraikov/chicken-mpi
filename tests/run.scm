@@ -24,9 +24,9 @@
 (define mpirun (or (get-environment-variable "MPIRUN") "mpirun"))
 (define csi (or (get-environment-variable "CHICKEN_CSI") "csi"))
 
-(if (not (and (zero? (system (conc mpirun " -np 8 "  csi " -s " 
+(if (not (and (zero? (system (conc mpirun " -np 2 "  csi " -s " 
                                    (make-pathname prefix  "datatest.scm"))))
-              (zero? (system (conc mpirun " -np 8 "  csi " -s " 
+              (zero? (system (conc mpirun " -np 2 "  csi " -s " 
                                    (make-pathname prefix  "mpitest.scm"))))
               ))
               
