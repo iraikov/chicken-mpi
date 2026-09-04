@@ -36,24 +36,10 @@ static C_word MPI_group_p(C_word obj)
   }
 }
 
-static C_word MPI_check_group (C_word obj) 
-{
-  if (C_immediatep(obj)) 
-  {
-   chicken_MPI_exception (MPI_ERR_COMM, "MPI_check_group",
-                          32, "invalid MPI group object");
-  } else if (C_block_header(obj) == MPI_GROUP_TAG) 
-  {
-    return C_SCHEME_UNDEFINED;
-  } else {
-          chicken_MPI_exception (MPI_ERR_COMM, "MPI_check_group",
-                                 32, "invalid MPI group object");
-  }
-}
 
 <#
 
-(define MPI:group? (foreign-lambda scheme-object "MPI_group_p" scheme-object))
+(define-mpi-checked MPI:group? (foreign-lambda scheme-object "MPI_group_p" scheme-object))
 
 (define MPI_alloc_group 
     (foreign-primitive scheme-object ((nonnull-c-pointer group))
@@ -70,7 +56,7 @@ static C_word MPI_check_group (C_word obj)
 END
 ))
 
-(define MPI:group-size
+(define-mpi-checked MPI:group-size
     (foreign-primitive scheme-object ((scheme-object x))
 #<<END
    C_word *ptr;
@@ -93,7 +79,7 @@ END
 ))
 
 
-(define MPI:group-rank
+(define-mpi-checked MPI:group-rank
     (foreign-primitive scheme-object ((scheme-object x))
 #<<END
    C_word result;
@@ -151,19 +137,18 @@ END
 ))
 
 
-(define (MPI:group-translate-ranks group1 ranks group2)
+(define-mpi-checked (MPI:group-translate-ranks group1 ranks group2)
   (let ((nranks (s32vector-length ranks)))
     (MPI_group_translate_ranks group1 group2 nranks 
 			       ranks (make-s32vector nranks)
 			       (make-s32vector nranks))))
 
 (define MPI_comm_group
-    (foreign-primitive nonnull-c-pointer ((scheme-object comm))
+    (foreign-primitive nonnull-c-pointer ((mpi-comm comm))
 #<<END
   C_word result;
   MPI_Group group;
 
-  MPI_check_comm (comm);
   if ((MPI_comm_p (comm)))
   {
      MPI_Comm_group(Comm_val(comm), &group);
@@ -178,19 +163,17 @@ END
 END
 ))
 
-(define (MPI:comm-group comm)
+(define-mpi-checked (MPI:comm-group comm)
   (MPI_alloc_group (MPI_comm_group comm)))
 
 
 (define MPI_group_union
-    (foreign-primitive nonnull-c-pointer ((scheme-object group1)
-					  (scheme-object group2))
+    (foreign-primitive nonnull-c-pointer ((mpi-group group1)
+					  (mpi-group group2))
 #<<END
   C_word result;
   MPI_Group group;
 
-  MPI_check_group(group1);
-  MPI_check_group(group2);
   if ((MPI_group_p (group1)) && (MPI_group_p (group2)))
   {
      MPI_Group_union(Group_val(group1), Group_val(group2), &group);
@@ -205,19 +188,17 @@ END
 END
 ))
 
-(define (MPI:group-union group1 group2)
+(define-mpi-checked (MPI:group-union group1 group2)
   (MPI_alloc_group (MPI_group_union group1 group2)))
 
 
 (define MPI_group_difference
-    (foreign-primitive nonnull-c-pointer ((scheme-object group1)
-					  (scheme-object group2))
+    (foreign-primitive nonnull-c-pointer ((mpi-group group1)
+					  (mpi-group group2))
 #<<END
   C_word result;
   MPI_Group group;
 
-  MPI_check_group(group1);
-  MPI_check_group(group2);
   if ((MPI_group_p (group1)) && (MPI_group_p (group2)))
   {
      MPI_Group_difference(Group_val(group1), Group_val(group2), &group);
@@ -232,19 +213,17 @@ END
 END
 ))
 
-(define (MPI:group-difference group1 group2)
+(define-mpi-checked (MPI:group-difference group1 group2)
   (MPI_alloc_group (MPI_group_difference group1 group2)))
 
 
 (define MPI_group_intersection
-    (foreign-primitive nonnull-c-pointer ((scheme-object group1)
-					  (scheme-object group2))
+    (foreign-primitive nonnull-c-pointer ((mpi-group group1)
+					  (mpi-group group2))
 #<<END
   C_word result;
   MPI_Group group;
 
-  MPI_check_group(group1);
-  MPI_check_group(group2);
   if ((MPI_group_p (group1)) && (MPI_group_p (group2)))
   {
      MPI_Group_intersection(Group_val(group1), Group_val(group2), &group);
@@ -259,12 +238,12 @@ END
 END
 ))
 
-(define (MPI:group-intersection group1 group2)
+(define-mpi-checked (MPI:group-intersection group1 group2)
   (MPI_alloc_group (MPI_group_intersection group1 group2)))
 
 
 (define MPI_group_incl
-    (foreign-primitive nonnull-c-pointer ((scheme-object group)
+    (foreign-primitive nonnull-c-pointer ((mpi-group group)
 					  (integer nranks)
 					  (scheme-object ranks))
 #<<END
@@ -273,7 +252,6 @@ END
   MPI_Group newg;
 
   C_i_check_vector (ranks);
-  MPI_check_group(group);
 
   if ((MPI_group_p (group)))
   {
@@ -290,12 +268,12 @@ END
 END
 ))
 
-(define (MPI:group-incl group ranks)
+(define-mpi-checked (MPI:group-incl group ranks)
   (MPI_alloc_group (MPI_group_incl group (s32vector-length ranks) ranks)))
 
 
 (define MPI_group_excl
-    (foreign-primitive nonnull-c-pointer ((scheme-object group)
+    (foreign-primitive nonnull-c-pointer ((mpi-group group)
 					  (integer nranks)
 					  (scheme-object ranks))
 #<<END
@@ -304,7 +282,6 @@ END
   MPI_Group newg;
 
   C_i_check_vector (ranks);
-  MPI_check_group(group);
 
   if ((MPI_group_p (group)))
   {
@@ -321,7 +298,7 @@ END
 END
 ))
 
-(define (MPI:group-excl group ranks)
+(define-mpi-checked (MPI:group-excl group ranks)
   (MPI_alloc_group (MPI_group_excl group (s32vector-length ranks) ranks)))
 
 
@@ -349,7 +326,7 @@ static void MPI_extract_ranges (C_word ranges,
 
 
 (define MPI_group_range_incl
-    (foreign-primitive nonnull-c-pointer ((scheme-object group)
+    (foreign-primitive nonnull-c-pointer ((mpi-group group)
 					  (scheme-object ranges)
 					  (s32vector exranges))
 #<<END
@@ -358,7 +335,6 @@ static void MPI_extract_ranges (C_word ranges,
   int num;
 
   C_i_check_vector (ranges);
-  MPI_check_group (group);
 
   if ((MPI_group_p (group)))
   {
@@ -376,7 +352,7 @@ END
 ))
 
 
-(define (MPI:group-range-incl group ranges)
+(define-mpi-checked (MPI:group-range-incl group ranges)
   (let ((len (vector-length ranges)))
     (MPI_alloc_group (MPI_group_range_incl group ranges (make-s32vector (* 3 len))))))
 
@@ -384,7 +360,7 @@ END
 
 
 (define MPI_group_range_excl
-    (foreign-primitive nonnull-c-pointer ((scheme-object group)
+    (foreign-primitive nonnull-c-pointer ((mpi-group group)
 					  (scheme-object ranges)
 					  (s32vector exranges))
 #<<END
@@ -393,7 +369,6 @@ END
   int num;
 
   C_i_check_vector (ranges);
-  MPI_check_group (group);
 
   if ((MPI_group_p (group)))
   {
@@ -411,7 +386,7 @@ END
 ))
 
 
-(define (MPI:group-range-excl group ranges)
+(define-mpi-checked (MPI:group-range-excl group ranges)
   (let ((len (vector-length ranges)))
     (MPI_alloc_group (MPI_group_range_excl group ranges (make-s32vector (* 3 len))))))
 

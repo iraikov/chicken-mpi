@@ -7,6 +7,10 @@
 #include <mpi.h>
 #include <chicken.h>
 
+#ifndef C_c_u8vector
+#define C_c_u8vector(x) ((unsigned char *)C_data_pointer(x))
+#endif
+
 typedef struct chicken_MPI_comm_struct {
      C_header tag;
      void *comm_data;

@@ -40,20 +40,6 @@ static C_word MPI_datatype_p(C_word obj)
 }
 
 
-static C_word MPI_check_datatype (C_word obj) 
-{
-  if (C_immediatep(obj)) 
-  {
-   chicken_MPI_exception (MPI_ERR_COMM, "MPI_check_datatype",
-                          32, "invalid MPI datatype object");
-  } else if (C_block_header(obj) == MPI_DATATYPE_TAG) 
-  {
-    return C_SCHEME_UNDEFINED;
-  } else {
-          chicken_MPI_exception (MPI_ERR_COMM, "MPI_check_datatype",
-                                 32, "invalid MPI datatype object");
-  }
-}
 
 <#
 
@@ -221,14 +207,13 @@ END
 END
 ))
 
-(define MPI:datatype? (foreign-lambda scheme-object "MPI_datatype_p" scheme-object))
+(define-mpi-checked MPI:datatype? (foreign-lambda scheme-object "MPI_datatype_p" scheme-object))
 
 
 (define MPI_datatype_finalizer 
-    (foreign-safe-lambda* void ((scheme-object ty))
+    (foreign-safe-lambda* void ((mpi-datatype ty))
 #<<END
    MPI_Datatype x;
-   MPI_check_datatype (ty);
 
    x = Datatype_val (ty);
 
@@ -254,14 +239,12 @@ END
 END
 ))
 
-(define MPI:pack-size 
+(define-mpi-checked MPI:pack-size 
     (foreign-safe-lambda* int ((int incount)
-                               (scheme-object ty)
-                               (scheme-object comm))
+                               (mpi-datatype ty)
+                               (mpi-comm comm))
 #<<END
      int result;
-     MPI_check_datatype(ty);
-     MPI_check_comm(comm);
      MPI_Pack_size(incount, Datatype_val(ty), Comm_val(comm), &result);
      C_return(result);
 END
@@ -333,7 +316,7 @@ END
   
 
 
-(define MPI:make-type-struct 
+(define-mpi-checked MPI:make-type-struct 
     (foreign-primitive scheme-object ((int fieldcount)
                                       (scheme-object blocklens)
                                       (scheme-object fieldtys))
@@ -350,8 +333,8 @@ END
 
   if (!(fieldcount > 0))
   {
-   chicken_MPI_exception (MPI_ERR_TYPE, "MPI:make-type-struct",
-                                        32, "invalid MPI struct datatype size");
+   MPI_Comm_call_errhandler(MPI_COMM_WORLD, chicken_MPI_errclass);
+   C_return(C_SCHEME_FALSE);
   }
 
   array_of_blocklens = malloc(fieldcount*sizeof(int));
@@ -377,12 +360,15 @@ END
   {
      status = MPI_Type_size(array_of_types[i-1], &fldtysize);
 
-     if (status != MPI_SUCCESS) 
+     if (status != MPI_SUCCESS)
      {
-      chicken_MPI_exception (MPI_ERR_TYPE, "MPI:make-type-struct",
-                                           20, "invalid MPI datatype");
+      MPI_Comm_call_errhandler(MPI_COMM_WORLD, status);
+      free(array_of_blocklens);
+      free(array_of_displs);
+      free(array_of_types);
+      C_return(C_SCHEME_FALSE);
      }
-     
+
      array_of_displs[i] = array_of_displs[i-1] + fldtysize * array_of_blocklens[i-1];
   }
 
@@ -393,18 +379,24 @@ END
                                   &newtype);
 
 
-  if (status != MPI_SUCCESS) 
+  if (status != MPI_SUCCESS)
   {
-   chicken_MPI_exception (MPI_ERR_TYPE, "MPI:make-type-struct",
-                                        26, "invalid MPI struct datatype");
+   MPI_Comm_call_errhandler(MPI_COMM_WORLD, status);
+   free(array_of_blocklens);
+   free(array_of_displs);
+   free(array_of_types);
+   C_return(C_SCHEME_FALSE);
   }
 
   status = MPI_Type_commit(&newtype);
 
-  if (status != MPI_SUCCESS) 
+  if (status != MPI_SUCCESS)
   {
-   chicken_MPI_exception (MPI_ERR_TYPE, "MPI:make-type-struct",
-                                         27, "invalid MPI datatype commit");
+   MPI_Comm_call_errhandler(MPI_COMM_WORLD, status);
+   free(array_of_blocklens);
+   free(array_of_displs);
+   free(array_of_types);
+   C_return(C_SCHEME_FALSE);
   }
 
   newdatatype.tag = MPI_DATATYPE_TAG;
@@ -421,19 +413,19 @@ EOF
 
 
 (define MPI_type_extent 
-    (foreign-safe-lambda* void ((scheme-object ty)
+    (foreign-safe-lambda* void ((mpi-datatype ty)
                                 (u32vector result))
 #<<EOF
   int status;
   MPI_Aint lb, extent;
 
-  MPI_check_datatype(ty);
 
   status = MPI_Type_get_extent(Datatype_val(ty), &lb, &extent);
 
-  if (status != MPI_SUCCESS) 
+  if (status != MPI_SUCCESS)
   {
-    chicken_MPI_exception (MPI_ERR_TYPE, "MPI:type-extent", 20, "invalid MPI datatype");
+    MPI_Comm_call_errhandler(MPI_COMM_WORLD, status);
+    return;
   }
 
   result[0] = (int)extent;
@@ -443,26 +435,26 @@ EOF
 ))
 
 
-(define (MPI:type-extent ty)
+(define-mpi-checked (MPI:type-extent ty)
   (let ((result (make-u32vector 2 0)))
     (MPI_type_extent ty result)
     (u32vector->list result)
     ))
 
 
-(define MPI:type-size 
-    (foreign-safe-lambda* int ((scheme-object ty))
+(define-mpi-checked MPI:type-size 
+    (foreign-safe-lambda* int ((mpi-datatype ty))
 #<<EOF
   int status, result;
   int size;
 
-  MPI_check_datatype(ty);
 
   status = MPI_Type_size(Datatype_val(ty), &size);
 
-  if (status != MPI_SUCCESS) 
+  if (status != MPI_SUCCESS)
   {
-    chicken_MPI_exception (MPI_ERR_TYPE, "MPI:type-size", 20, "invalid MPI datatype");
+    MPI_Comm_call_errhandler(MPI_COMM_WORLD, status);
+    C_return(0);
   }
 
   result = (int)size;

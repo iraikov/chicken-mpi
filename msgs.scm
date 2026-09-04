@@ -30,7 +30,6 @@ void MPI_send_fixnum (C_word data, C_word dest, C_word tag, C_word comm)
 {
   int n, vdest, vtag;
 
-  MPI_check_comm(comm);
 
   n = C_unfix(data);
   vdest = (int)C_num_to_int (dest);
@@ -44,7 +43,6 @@ void MPI_send_int (C_word data, C_word dest, C_word tag, C_word comm)
 {
   long n; int vdest, vtag;
 
-  MPI_check_comm(comm);
 
   n = C_num_to_long(data);
   vdest = (int)C_num_to_int (dest);
@@ -58,7 +56,6 @@ void MPI_send_flonum (C_word data, C_word dest, C_word tag, C_word comm)
 {
   double n; int vdest, vtag;
 
-  MPI_check_comm(comm);
 
   n = C_c_double(data);
   vdest = (int)C_num_to_int (dest);
@@ -71,10 +68,9 @@ void MPI_send_u8vector (C_word data, C_word dest, C_word tag, C_word comm)
 {
   unsigned char *vect; int len, vdest, vtag;
 
-  MPI_check_comm(comm);
 
   vect  = C_c_u8vector(data);
-  len   = C_8vector_length(data);
+  len   = C_bytevector_length(data);
   vdest = (int)C_num_to_int (dest);
   vtag  = (int)C_num_to_int (tag);
 
@@ -86,7 +82,6 @@ void MPI_send_s8vector (C_word data, C_word dest, C_word tag, C_word comm)
 {
   char *vect; int len, vdest, vtag;
 
-  MPI_check_comm(comm);
 
   vect  = C_c_s8vector(data);
   len   = C_8vector_length(data);
@@ -101,7 +96,6 @@ void MPI_send_u16vector (C_word data, C_word dest, C_word tag, C_word comm)
 {
   unsigned short *vect; int len, vdest, vtag;
 
-  MPI_check_comm(comm);
 
   vect  = C_c_u16vector(data);
   len   = C_16vector_length(data);
@@ -116,7 +110,6 @@ void MPI_send_s16vector (C_word data, C_word dest, C_word tag, C_word comm)
 {
   short *vect; int len, vdest, vtag;
 
-  MPI_check_comm(comm);
 
   vect  = C_c_s16vector(data);
   len   = C_16vector_length(data);
@@ -131,7 +124,6 @@ void MPI_send_u32vector (C_word data, C_word dest, C_word tag, C_word comm)
 {
   unsigned int *vect; int len, vdest, vtag;
 
-  MPI_check_comm(comm);
 
   vect  = C_c_u32vector(data);
   len   = C_32vector_length(data);
@@ -146,7 +138,6 @@ void MPI_send_s32vector (C_word data, C_word dest, C_word tag, C_word comm)
 {
   int *vect; int len, vdest, vtag;
 
-  MPI_check_comm(comm);
 
   vect  = C_c_s32vector(data);
   len   = C_32vector_length(data);
@@ -161,7 +152,6 @@ void MPI_send_f32vector (C_word data, C_word dest, C_word tag, C_word comm)
 {
   float *vect; int len, vdest, vtag;
 
-  MPI_check_comm(comm);
 
   vect  = C_c_f32vector(data);
   len   = C_32vector_length(data);
@@ -176,7 +166,6 @@ void MPI_send_f64vector (C_word data, C_word dest, C_word tag, C_word comm)
 {
   double *vect; int len, vdest, vtag;
 
-  MPI_check_comm(comm);
 
   vect  = C_c_f64vector(data);
   len   = C_64vector_length(data);
@@ -192,7 +181,6 @@ void MPI_send_bytevector (C_word data, C_word dest, C_word tag, C_word comm)
   char * buffer;
   int len; int vdest, vtag;
 
-  MPI_check_comm(comm);
   C_i_check_bytevector (data);
 
   vdest = (int)C_num_to_int (dest);
@@ -210,8 +198,6 @@ void MPI_send_data (C_word ty, int count, C_word data, C_word dest, C_word tag, 
   char * buffer;
   int len; int vdest, vtag;
 
-  MPI_check_comm(comm);
-  MPI_check_datatype (ty);
   C_i_check_bytevector (data);
 
   vdest = (int)C_num_to_int (dest);
@@ -226,56 +212,41 @@ void MPI_send_data (C_word ty, int count, C_word data, C_word dest, C_word tag, 
 
 ;; Sending data
 
-(define MPI:send-fixnum (foreign-lambda void "MPI_send_fixnum" 
-					scheme-object scheme-object scheme-object scheme-object ))
-(define MPI:send-int (foreign-lambda void "MPI_send_int" 
-				     scheme-object scheme-object scheme-object scheme-object ))
-(define MPI:send-flonum (foreign-lambda void "MPI_send_flonum" 
-					scheme-object scheme-object scheme-object scheme-object ))
+(define-mpi-checked MPI:send-fixnum (foreign-lambda void "MPI_send_fixnum" scheme-object scheme-object scheme-object mpi-comm))
+(define-mpi-checked MPI:send-int (foreign-lambda void "MPI_send_int" scheme-object scheme-object scheme-object mpi-comm))
+(define-mpi-checked MPI:send-flonum (foreign-lambda void "MPI_send_flonum" scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI:send-u8vector (foreign-lambda void "MPI_send_u8vector" 
-					  scheme-object scheme-object scheme-object scheme-object ))
-(define MPI:send-s8vector (foreign-lambda void "MPI_send_s8vector" 
-					  scheme-object scheme-object scheme-object scheme-object ))
-(define MPI:send-u16vector (foreign-lambda void "MPI_send_u16vector" 
-					   scheme-object scheme-object scheme-object scheme-object ))
-(define MPI:send-s16vector (foreign-lambda void "MPI_send_s16vector" 
-					   scheme-object scheme-object scheme-object scheme-object ))
-(define MPI:send-u32vector (foreign-lambda void "MPI_send_u32vector" 
-					   scheme-object scheme-object scheme-object scheme-object ))
-(define MPI:send-s32vector (foreign-lambda void "MPI_send_s32vector" 
-					   scheme-object scheme-object scheme-object scheme-object ))
-(define MPI:send-f32vector (foreign-lambda void "MPI_send_f32vector" 
-					   scheme-object scheme-object scheme-object scheme-object ))
-(define MPI:send-f64vector (foreign-lambda void "MPI_send_f64vector" 
-					   scheme-object scheme-object scheme-object scheme-object ))
+(define-mpi-checked MPI:send-u8vector (foreign-lambda void "MPI_send_u8vector" scheme-object scheme-object scheme-object mpi-comm))
+(define-mpi-checked MPI:send-s8vector (foreign-lambda void "MPI_send_s8vector" scheme-object scheme-object scheme-object mpi-comm))
+(define-mpi-checked MPI:send-u16vector (foreign-lambda void "MPI_send_u16vector" scheme-object scheme-object scheme-object mpi-comm))
+(define-mpi-checked MPI:send-s16vector (foreign-lambda void "MPI_send_s16vector" scheme-object scheme-object scheme-object mpi-comm))
+(define-mpi-checked MPI:send-u32vector (foreign-lambda void "MPI_send_u32vector" scheme-object scheme-object scheme-object mpi-comm))
+(define-mpi-checked MPI:send-s32vector (foreign-lambda void "MPI_send_s32vector" scheme-object scheme-object scheme-object mpi-comm))
+(define-mpi-checked MPI:send-f32vector (foreign-lambda void "MPI_send_f32vector" scheme-object scheme-object scheme-object mpi-comm))
+(define-mpi-checked MPI:send-f64vector (foreign-lambda void "MPI_send_f64vector" scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_send_bytevector (foreign-lambda void "MPI_send_bytevector" 
-					    scheme-object scheme-object scheme-object scheme-object ))
-(define MPI_send_data (foreign-lambda void "MPI_send_data" 
-                                      scheme-object int scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_send_bytevector (foreign-lambda void "MPI_send_bytevector" scheme-object scheme-object scheme-object mpi-comm))
+(define MPI_send_data (foreign-lambda void "MPI_send_data" mpi-datatype int scheme-object scheme-object scheme-object mpi-comm))
 
-(define (MPI:send-bytevector blob dest tag comm)
+(define-mpi-checked (MPI:send-bytevector blob dest tag comm)
   (MPI_send_bytevector blob dest tag comm))
   
-(define (MPI:send ty count x dest tag comm)
+(define-mpi-checked (MPI:send ty count x dest tag comm)
   (MPI_send_data ty count x dest tag comm))
 
 
 ;; Probe for pending messages and determine length 
-(define MPI:probe 
-    (foreign-primitive ((scheme-object ty)
+(define-mpi-checked MPI:probe 
+    (foreign-primitive ((mpi-datatype ty)
                         (integer source)
 			(integer tag)
-			(scheme-object comm))
+			(mpi-comm comm))
 #<<EOF
   MPI_Status status;
   int count;
   C_word status_count, status_source, status_tag;
   C_word *ptr;
 
-  MPI_check_comm(comm);
-  MPI_check_datatype(ty);
 
   MPI_Probe(source, tag, Comm_val(comm), &status);
   MPI_Get_count(&status, Datatype_val(ty), &count);
@@ -297,15 +268,14 @@ void MPI_send_data (C_word ty, int count, C_word data, C_word dest, C_word tag, 
 EOF
 ))
 
-(define MPI:receive-int 
+(define-mpi-checked MPI:receive-int 
     (foreign-primitive scheme-object ((integer source)
 				      (integer tag)
-				      (scheme-object comm))
+				      (mpi-comm comm))
 #<<EOF
   long n; 
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   MPI_Recv(&n, 1, MPI_LONG, source, tag, Comm_val(comm), MPI_STATUS_IGNORE);
 
@@ -316,15 +286,14 @@ EOF
 EOF
 ))
 
-(define MPI:receive-flonum 
+(define-mpi-checked MPI:receive-flonum 
     (foreign-primitive scheme-object ((integer source)
 				      (integer tag)
-				      (scheme-object comm))
+				      (mpi-comm comm))
 #<<EOF
   double n; C_word *ptr;
   C_word result; 
 
-  MPI_check_comm(comm);
 
   MPI_Recv(&n, 1, MPI_DOUBLE, source, tag, Comm_val(comm), MPI_STATUS_IGNORE);
 
@@ -336,15 +305,14 @@ EOF
 ))
 
 
-(define MPI:receive-fixnum
+(define-mpi-checked MPI:receive-fixnum
     (foreign-primitive scheme-object ((integer source)
 				      (integer tag)
-				      (scheme-object comm))
+				      (mpi-comm comm))
 #<<EOF
   int n; 
   C_word result; 
 
-  MPI_check_comm(comm);
 
   MPI_Recv(&n, 1, MPI_INT, source, tag, Comm_val(comm), MPI_STATUS_IGNORE);
 
@@ -358,13 +326,12 @@ C_word MPI_receive_u8vector (C_word data, C_word source, C_word tag, C_word comm
 {
   unsigned char *vect; int len, vsource, vtag;
 
-  MPI_check_comm(comm);
 
   vsource = (int)C_num_to_int (source);
   vtag    = (int)C_num_to_int (tag);
 
   vect    = C_c_u8vector(data);
-  len     = C_8vector_length(data);
+  len     = C_bytevector_length(data);
 
   MPI_Recv(vect, len, MPI_UNSIGNED_CHAR, vsource, vtag, Comm_val(comm), MPI_STATUS_IGNORE);
 
@@ -376,7 +343,6 @@ C_word MPI_receive_s8vector (C_word data, C_word source, C_word tag, C_word comm
 {
   char *vect; int len, vsource, vtag;
 
-  MPI_check_comm(comm);
 
   vect    = C_c_s8vector(data);
   len     = C_8vector_length(data);
@@ -393,7 +359,6 @@ C_word MPI_receive_u16vector (C_word data, C_word source, C_word tag, C_word com
 {
   unsigned short *vect; int len, vsource, vtag;
 
-  MPI_check_comm(comm);
 
   vect    = C_c_u16vector(data);
   len     = C_16vector_length(data);
@@ -410,7 +375,6 @@ C_word MPI_receive_s16vector (C_word data, C_word source, C_word tag, C_word com
 {
   short *vect; int len, vsource, vtag;
 
-  MPI_check_comm(comm);
 
   vect    = C_c_s16vector(data);
   len     = C_16vector_length(data);
@@ -427,7 +391,6 @@ C_word MPI_receive_u32vector (C_word data, C_word source, C_word tag, C_word com
 {
   unsigned int *vect; int len, vsource, vtag;
 
-  MPI_check_comm(comm);
 
   vect    = C_c_u32vector(data);
   len     = C_32vector_length(data);
@@ -444,7 +407,6 @@ C_word MPI_receive_s32vector (C_word data, C_word source, C_word tag, C_word com
 {
   int *vect; int len, vsource, vtag;
 
-  MPI_check_comm(comm);
 
   vect    = C_c_s32vector(data);
   len     = C_32vector_length(data);
@@ -461,7 +423,6 @@ C_word MPI_receive_f32vector (C_word data, C_word source, C_word tag, C_word com
 {
   float *vect; int len, vsource, vtag;
 
-  MPI_check_comm(comm);
 
   vect    = C_c_f32vector(data);
   len     = C_32vector_length(data);
@@ -478,7 +439,6 @@ C_word MPI_receive_f64vector (C_word data, C_word source, C_word tag, C_word com
 {
   double *vect; int len, vsource, vtag;
 
-  MPI_check_comm(comm);
 
   vect    = C_c_f64vector(data);
   len     = C_64vector_length(data);
@@ -496,7 +456,6 @@ C_word MPI_receive_bytevector (C_word data, C_word source, C_word tag, C_word co
   char * buffer;
   long len; int vsource, vtag;
 
-  MPI_check_comm(comm);
   C_i_check_bytevector (data);
   
   vsource = (int)C_num_to_int (source);
@@ -516,7 +475,6 @@ C_word MPI_receive_data (C_word ty, int count, C_word data, C_word source, C_wor
   char * buffer;
   int vsource, vtag;
 
-  MPI_check_comm(comm);
   C_i_check_bytevector (data);
   
   vsource = (int)C_num_to_int (source);
@@ -536,28 +494,18 @@ C_word MPI_receive_data (C_word ty, int count, C_word data, C_word source, C_wor
 ;; Receiving data
 
 
-(define MPI_receive_u8vector (foreign-lambda scheme-object "MPI_receive_u8vector" 
-					     scheme-object scheme-object scheme-object scheme-object ))
-(define MPI_receive_s8vector (foreign-lambda scheme-object "MPI_receive_s8vector" 
-					     scheme-object scheme-object scheme-object scheme-object ))
-(define MPI_receive_u16vector (foreign-lambda scheme-object "MPI_receive_u16vector" 
-					      scheme-object scheme-object scheme-object scheme-object ))
-(define MPI_receive_s16vector (foreign-lambda scheme-object "MPI_receive_s16vector" 
-					      scheme-object scheme-object scheme-object scheme-object ))
-(define MPI_receive_u32vector (foreign-lambda scheme-object "MPI_receive_u32vector" 
-					      scheme-object scheme-object scheme-object scheme-object ))
-(define MPI_receive_s32vector (foreign-lambda scheme-object "MPI_receive_s32vector" 
-					      scheme-object scheme-object scheme-object scheme-object ))
-(define MPI_receive_f32vector (foreign-lambda scheme-object "MPI_receive_f32vector" 
-					      scheme-object scheme-object scheme-object scheme-object ))
-(define MPI_receive_f64vector (foreign-lambda scheme-object "MPI_receive_f64vector" 
-					      scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_receive_u8vector (foreign-lambda scheme-object "MPI_receive_u8vector" scheme-object scheme-object scheme-object mpi-comm))
+(define MPI_receive_s8vector (foreign-lambda scheme-object "MPI_receive_s8vector" scheme-object scheme-object scheme-object mpi-comm))
+(define MPI_receive_u16vector (foreign-lambda scheme-object "MPI_receive_u16vector" scheme-object scheme-object scheme-object mpi-comm))
+(define MPI_receive_s16vector (foreign-lambda scheme-object "MPI_receive_s16vector" scheme-object scheme-object scheme-object mpi-comm))
+(define MPI_receive_u32vector (foreign-lambda scheme-object "MPI_receive_u32vector" scheme-object scheme-object scheme-object mpi-comm))
+(define MPI_receive_s32vector (foreign-lambda scheme-object "MPI_receive_s32vector" scheme-object scheme-object scheme-object mpi-comm))
+(define MPI_receive_f32vector (foreign-lambda scheme-object "MPI_receive_f32vector" scheme-object scheme-object scheme-object mpi-comm))
+(define MPI_receive_f64vector (foreign-lambda scheme-object "MPI_receive_f64vector" scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_receive_bytevector (foreign-lambda scheme-object "MPI_receive_bytevector" 
-					       scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_receive_bytevector (foreign-lambda scheme-object "MPI_receive_bytevector" scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_receive_data (foreign-lambda scheme-object "MPI_receive_data" 
-                                         scheme-object int scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_receive_data (foreign-lambda scheme-object "MPI_receive_data" scheme-object int scheme-object scheme-object scheme-object mpi-comm))
 
 (define (make-receive ty makev recv)
   (lambda (source tag comm)
@@ -572,7 +520,7 @@ C_word MPI_receive_data (C_word ty, int count, C_word data, C_word source, C_wor
   (er-macro-transformer
    (lambda (x r c)
      (let* ((type    (cadr x))
-            (%define (r 'define))
+            (%define (r 'define-mpi-checked))
             (makev   (string->symbol (string-append "make-" (symbol->string type) "vector")))
             (recv    (string->symbol (string-append "MPI_receive_" (symbol->string type) "vector")))
             (name    (string->symbol (string-append "MPI:receive-" (symbol->string type) "vector")))
@@ -589,22 +537,22 @@ C_word MPI_receive_data (C_word ty, int count, C_word data, C_word source, C_wor
 (define-srfi4-receive f64)
 
 
-(define MPI:receive-bytevector (make-receive MPI:type-byte make-blob MPI_receive_bytevector))
+(define-mpi-checked MPI:receive-bytevector (make-receive MPI:type-byte make-blob MPI_receive_bytevector))
 
-(define (MPI:receive-bytevector-with-status source tag comm)
+(define-mpi-checked (MPI:receive-bytevector-with-status source tag comm)
   (let-values (((count actual-source actual-tag) (MPI:probe MPI:type-byte source tag comm)))
     (let ((buffer (make-blob count)))
       (let ((v (MPI_receive_bytevector buffer source tag comm)))
         (values v actual-source actual-tag)))
     ))
 
-(define (MPI:receive ty source tag comm)
+(define-mpi-checked (MPI:receive ty source tag comm)
   (let-values (((count actual-source actual-tag) (MPI:probe ty source tag comm)))
     (let ((buffer (make-blob (* count (MPI:type-size ty)))))
       (MPI_receive_data ty count buffer actual-source actual-tag comm))
     ))
 
-(define (MPI:receive-with-status ty source tag comm)
+(define-mpi-checked (MPI:receive-with-status ty source tag comm)
   (let-values (((count actual-source actual-tag) (MPI:probe ty source tag comm)))
     (let ((buffer (make-blob (* count (MPI:type-size ty)))))
       (let ((v (MPI_receive_data ty count buffer source tag comm)))

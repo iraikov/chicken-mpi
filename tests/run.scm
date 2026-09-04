@@ -22,7 +22,8 @@
 (define prefix (pathname-directory (program-name)))
 
 (define mpirun (or (get-environment-variable "MPIRUN") "mpirun"))
-(define csi (or (get-environment-variable "CHICKEN_CSI") "csi"))
+(define csi (or (get-environment-variable "CHICKEN_CSI")
+                (car (argv))))
 
 (if (not (and (zero? (system (conc mpirun " -np 2 "  csi " -s " 
                                    (make-pathname prefix  "datatest.scm"))))

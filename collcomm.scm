@@ -29,27 +29,25 @@
 
 C_word MPI_barrier(C_word comm)
 {
-  MPI_check_comm (comm);
 
   MPI_Barrier(Comm_val(comm));
   C_return (C_SCHEME_UNDEFINED);
 }
 <#
 
-(define MPI:barrier (foreign-lambda scheme-object "MPI_barrier" scheme-object))
+(define-mpi-checked MPI:barrier (foreign-lambda scheme-object "MPI_barrier" mpi-comm))
 
 
 ;; Broadcast 
 
 
-(define MPI:broadcast-fixnum 
+(define-mpi-checked MPI:broadcast-fixnum 
     (foreign-primitive scheme-object ((integer data)
 				      (integer root)
-				      (scheme-object comm))
+				      (mpi-comm comm))
 #<<END
   C_word result; int n; 
 
-  MPI_check_comm(comm);
 
   n = data;
 
@@ -62,15 +60,14 @@ END
 ))
 
 
-(define MPI:broadcast-int 
+(define-mpi-checked MPI:broadcast-int 
     (foreign-primitive scheme-object ((integer data)
 				      (integer root)
-				      (scheme-object comm))
+				      (mpi-comm comm))
 #<<END
   C_word result;
   long n; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   n = data;
 
@@ -84,15 +81,14 @@ END
 ))
 
 
-(define MPI:broadcast-flonum 
+(define-mpi-checked MPI:broadcast-flonum 
     (foreign-primitive scheme-object ((double data)
 				      (integer root)
-				      (scheme-object comm))
+				      (mpi-comm comm))
 #<<END
   C_word result;
   double n; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   n = data;
 
@@ -111,8 +107,6 @@ C_word MPI_broadcast_data(C_word ty, int count, C_word data, C_word root, C_word
 {
   int vroot, len; char *vect;
 
-  MPI_check_comm (comm);
-  MPI_check_datatype (ty);
   C_i_check_bytevector (data);
 
   vroot = (int)C_num_to_int (root);
@@ -128,7 +122,6 @@ C_word MPI_broadcast_bytevector(C_word data, C_word root, C_word comm)
 {
   int vroot, len; char *vect;
 
-  MPI_check_comm (comm);
   C_i_check_bytevector (data);
 
   vroot = (int)C_num_to_int (root);
@@ -144,10 +137,9 @@ C_word MPI_broadcast_u8vector (C_word data, C_word root, C_word comm)
 {
   unsigned char *vect; int len, vroot;
 
-  MPI_check_comm(comm);
 
   vect  = C_c_u8vector(data);
-  len   = C_8vector_length(data);
+  len   = C_bytevector_length(data);
   vroot = (int)C_num_to_int (root);
 
   MPI_Bcast(vect, len, MPI_UNSIGNED_CHAR, vroot, Comm_val(comm));
@@ -160,7 +152,6 @@ C_word MPI_broadcast_s8vector (C_word data, C_word root, C_word comm)
 {
   char *vect; int len, vroot;
 
-  MPI_check_comm(comm);
 
   vect  = C_c_s8vector(data);
   len   = C_8vector_length(data);
@@ -176,7 +167,6 @@ C_word MPI_broadcast_u16vector (C_word data, C_word root, C_word comm)
 {
   unsigned short *vect; int len, vroot;
 
-  MPI_check_comm(comm);
 
   vect  = C_c_u16vector(data);
   len   = C_16vector_length(data);
@@ -192,7 +182,6 @@ C_word MPI_broadcast_s16vector (C_word data, C_word root, C_word comm)
 {
   short *vect; int len, vroot;
 
-  MPI_check_comm(comm);
 
   vect  = C_c_s16vector(data);
   len   = C_16vector_length(data);
@@ -208,7 +197,6 @@ C_word MPI_broadcast_u32vector (C_word data, C_word root, C_word comm)
 {
   unsigned int *vect; int len, vroot;
 
-  MPI_check_comm(comm);
 
   vect  = C_c_u32vector(data);
   len   = C_32vector_length(data);
@@ -224,7 +212,6 @@ C_word MPI_broadcast_s32vector (C_word data, C_word root, C_word comm)
 {
   int *vect; int len, vroot;
 
-  MPI_check_comm(comm);
 
   vect  = C_c_s32vector(data);
   len   = C_32vector_length(data);
@@ -240,7 +227,6 @@ C_word MPI_broadcast_f32vector (C_word data, C_word root, C_word comm)
 {
   float *vect; int len, vroot;
 
-  MPI_check_comm(comm);
 
   vect  = C_c_f32vector(data);
   len   = C_32vector_length(data);
@@ -256,7 +242,6 @@ C_word MPI_broadcast_f64vector (C_word data, C_word root, C_word comm)
 {
   double *vect; int len, vroot;
 
-  MPI_check_comm(comm);
 
   vect  = C_c_f64vector(data);
   len   = C_64vector_length(data);
@@ -268,27 +253,17 @@ C_word MPI_broadcast_f64vector (C_word data, C_word root, C_word comm)
 }
 <#
 
-(define MPI_broadcast_u8vector (foreign-lambda scheme-object "MPI_broadcast_u8vector" 
-					       scheme-object scheme-object scheme-object ))
-(define MPI_broadcast_s8vector (foreign-lambda scheme-object "MPI_broadcast_s8vector" 
-					       scheme-object scheme-object scheme-object ))
-(define MPI_broadcast_u16vector (foreign-lambda scheme-object "MPI_broadcast_u16vector" 
-						scheme-object scheme-object scheme-object ))
-(define MPI_broadcast_s16vector (foreign-lambda scheme-object "MPI_broadcast_s16vector" 
-						scheme-object scheme-object scheme-object ))
-(define MPI_broadcast_u32vector (foreign-lambda scheme-object "MPI_broadcast_u32vector" 
-						scheme-object scheme-object scheme-object ))
-(define MPI_broadcast_s32vector (foreign-lambda scheme-object "MPI_broadcast_s32vector" 
-						scheme-object scheme-object scheme-object ))
-(define MPI_broadcast_f32vector (foreign-lambda scheme-object "MPI_broadcast_f32vector" 
-						scheme-object scheme-object scheme-object ))
-(define MPI_broadcast_f64vector (foreign-lambda scheme-object "MPI_broadcast_f64vector" 
-						scheme-object scheme-object scheme-object ))
+(define MPI_broadcast_u8vector (foreign-lambda scheme-object "MPI_broadcast_u8vector" scheme-object scheme-object mpi-comm))
+(define MPI_broadcast_s8vector (foreign-lambda scheme-object "MPI_broadcast_s8vector" scheme-object scheme-object mpi-comm))
+(define MPI_broadcast_u16vector (foreign-lambda scheme-object "MPI_broadcast_u16vector" scheme-object scheme-object mpi-comm))
+(define MPI_broadcast_s16vector (foreign-lambda scheme-object "MPI_broadcast_s16vector" scheme-object scheme-object mpi-comm))
+(define MPI_broadcast_u32vector (foreign-lambda scheme-object "MPI_broadcast_u32vector" scheme-object scheme-object mpi-comm))
+(define MPI_broadcast_s32vector (foreign-lambda scheme-object "MPI_broadcast_s32vector" scheme-object scheme-object mpi-comm))
+(define MPI_broadcast_f32vector (foreign-lambda scheme-object "MPI_broadcast_f32vector" scheme-object scheme-object mpi-comm))
+(define MPI_broadcast_f64vector (foreign-lambda scheme-object "MPI_broadcast_f64vector" scheme-object scheme-object mpi-comm))
 
-(define MPI_broadcast_bytevector (foreign-lambda scheme-object "MPI_broadcast_bytevector" 
-						 scheme-object scheme-object scheme-object ))
-(define MPI_broadcast_data (foreign-lambda scheme-object "MPI_broadcast_data" 
-                                           scheme-object int scheme-object scheme-object scheme-object ))
+(define MPI_broadcast_bytevector (foreign-lambda scheme-object "MPI_broadcast_bytevector" scheme-object scheme-object mpi-comm))
+(define MPI_broadcast_data (foreign-lambda scheme-object "MPI_broadcast_data" mpi-datatype int scheme-object scheme-object mpi-comm))
 
   
 (define (make-bcast obj-size make-obj bcast)
@@ -309,7 +284,7 @@ C_word MPI_broadcast_f64vector (C_word data, C_word root, C_word comm)
   (er-macro-transformer
    (lambda (x r c)
      (let* ((type (cadr x))
-            (%define (r 'define))
+            (%define (r 'define-mpi-checked))
             (vlen    (string->symbol (string-append (symbol->string type) "vector-length")))
             (makev   (string->symbol (string-append "make-" (symbol->string type) "vector")))
             (bcastv  (string->symbol (string-append "MPI_broadcast_" (symbol->string type) "vector")))
@@ -327,11 +302,11 @@ C_word MPI_broadcast_f64vector (C_word data, C_word root, C_word comm)
 (define-srfi4-broadcast f64)
 
 
-(define MPI:broadcast-bytevector
+(define-mpi-checked MPI:broadcast-bytevector
   (make-bcast blob-size make-blob MPI_broadcast_bytevector))
 
 
-(define (MPI:broadcast ty count v root comm)
+(define-mpi-checked (MPI:broadcast ty count v root comm)
   (let ((myself (MPI:comm-rank comm)))
     (if (= root myself)
         ;; if this is the root process, broadcast the data
@@ -449,12 +424,11 @@ static void MPI_counts_displs(int size,
 (define MPI_scatter_int 
     (foreign-primitive scheme-object ((scheme-object data)
 				      (integer root)
-				      (scheme-object comm))
+				      (mpi-comm comm))
 #<<END
   C_word result; int *vdata; 
   int n; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   if (data == C_SCHEME_UNDEFINED)
   {
@@ -478,12 +452,11 @@ END
 (define MPI_scatter_flonum 
     (foreign-primitive scheme-object ((scheme-object data)
 				      (integer root)
-				      (scheme-object comm))
+				      (mpi-comm comm))
 #<<END
   C_word result; C_word *ptr;
   double n; double *vdata; 
 
-  MPI_check_comm(comm);
 
   if (data == C_SCHEME_UNDEFINED)
   {
@@ -511,7 +484,6 @@ C_word MPI_scatter_data (C_word ty, C_word data, C_word sendcount, C_word recv, 
   unsigned char *vect, *vrecv; int  vroot, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
   C_i_check_bytevector (recv);
 
   vroot  = (int)C_num_to_int (root);
@@ -539,7 +511,6 @@ C_word MPI_scatter_bytevector (C_word data, C_word sendcount, C_word recv, C_wor
   unsigned char *vect, *vrecv; int  vroot, rlen, slen, status, vectlen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
   C_i_check_bytevector (recv);
 
   vroot  = (int)C_num_to_int (root);
@@ -569,11 +540,10 @@ C_word MPI_scatter_u8vector (C_word data, C_word sendcount, C_word recv, C_word 
   unsigned char *vect, *vrecv; int vroot, rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vroot  = (int)C_num_to_int (root);
   vrecv  = C_c_u8vector(recv);
-  rlen   = C_8vector_length(recv);
+  rlen   = C_bytevector_length(recv);
 
   if (data == C_SCHEME_UNDEFINED)
   {
@@ -595,7 +565,6 @@ C_word MPI_scatter_s8vector (C_word data, C_word sendcount, C_word recv, C_word 
   char *vect, *vrecv; int  vroot, rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vroot  = (int)C_num_to_int (root);
   vrecv  = C_c_s8vector(recv);
@@ -622,7 +591,6 @@ C_word MPI_scatter_u16vector (C_word data, C_word sendcount, C_word recv, C_word
   unsigned short *vect, *vrecv; int  vroot, rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vroot  = (int)C_num_to_int (root);
   vrecv  = C_c_u16vector(recv);
@@ -648,7 +616,6 @@ C_word MPI_scatter_s16vector (C_word data, C_word sendcount, C_word recv, C_word
   short *vect, *vrecv; int  vroot, rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vroot  = (int)C_num_to_int (root);
   vrecv  = C_c_s16vector(recv);
@@ -675,7 +642,6 @@ C_word MPI_scatter_u32vector (C_word data, C_word sendcount, C_word recv, C_word
   unsigned int *vect, *vrecv; int  vroot, rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vroot  = (int)C_num_to_int (root);
   vrecv  = C_c_u32vector(recv);
@@ -701,7 +667,6 @@ C_word MPI_scatter_s32vector (C_word data, C_word sendcount, C_word recv, C_word
   int *vect, *vrecv; int  vroot, rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vroot  = (int)C_num_to_int (root);
   vrecv  = C_c_s32vector(recv);
@@ -728,7 +693,6 @@ C_word MPI_scatter_f32vector (C_word data, C_word sendcount, C_word recv, C_word
   float *vect, *vrecv; int  vroot, rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vroot  = (int)C_num_to_int (root);
   vrecv  = C_c_f32vector(recv);
@@ -755,7 +719,6 @@ C_word MPI_scatter_f64vector (C_word data, C_word sendcount, C_word recv, C_word
   double *vect, *vrecv; int  vroot, rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vroot  = (int)C_num_to_int (root);
   vrecv  = C_c_f64vector(recv);
@@ -782,8 +745,6 @@ C_word MPI_scatterv_data (C_word ty, C_word sendbuf, C_word sendlengths,
 {
   int slen, rlen, vroot; int *vsendlengths, *vsendcounts, *vdispls;
 
-  MPI_check_comm (comm);
-  MPI_check_datatype (ty);
 
   C_i_check_bytevector (recvbuf);
 
@@ -822,7 +783,6 @@ C_word MPI_scatterv_bytevector (C_word sendbuf, C_word sendlengths,
 {
   int len, vroot; int *vsendlengths, *vsendcounts, *vdispls;
 
-  MPI_check_comm (comm);
 
   C_i_check_bytevector (recvbuf);
 
@@ -861,14 +821,13 @@ C_word MPI_scatterv_u8vector (C_word sendbuf, C_word sendlengths,
 {
   int len, vroot; int *vsendlengths, *vsendcounts, *vdispls;
 
-  MPI_check_comm (comm);
 
   vroot = (int)C_num_to_int (root);
 
   if (sendbuf == C_SCHEME_UNDEFINED)
   {
      MPI_Scatterv(NULL, NULL, NULL, MPI_UNSIGNED_CHAR,
-                  C_c_u8vector(recvbuf), C_8vector_length(recvbuf), MPI_UNSIGNED_CHAR,
+                  C_c_u8vector(recvbuf), C_bytevector_length(recvbuf), MPI_UNSIGNED_CHAR,
                   vroot, Comm_val(comm));
   }
   else
@@ -881,7 +840,7 @@ C_word MPI_scatterv_u8vector (C_word sendbuf, C_word sendlengths,
      MPI_counts_displs(len, vsendlengths, vsendcounts, vdispls);
   
      MPI_Scatterv(C_c_u8vector(sendbuf), vsendcounts, vdispls, MPI_UNSIGNED_CHAR,
-                  C_c_u8vector(recvbuf), C_8vector_length(recvbuf), MPI_UNSIGNED_CHAR,
+                  C_c_u8vector(recvbuf), C_bytevector_length(recvbuf), MPI_UNSIGNED_CHAR,
                   vroot, Comm_val(comm));
   }
 
@@ -894,7 +853,6 @@ C_word MPI_scatterv_s8vector (C_word sendbuf, C_word sendlengths,
 {
   int len, vroot; int *vsendlengths, *vsendcounts, *vdispls;
 
-  MPI_check_comm (comm);
 
   vroot = (int)C_num_to_int (root);
 
@@ -929,7 +887,6 @@ C_word MPI_scatterv_u16vector (C_word sendbuf, C_word sendlengths,
 {
   int len, vroot; int *vsendlengths, *vsendcounts, *vdispls;
 
-  MPI_check_comm (comm);
 
   vroot = (int)C_num_to_int (root);
 
@@ -962,7 +919,6 @@ C_word MPI_scatterv_s16vector (C_word sendbuf, C_word sendlengths,
 {
   int len, vroot; int *vsendlengths, *vsendcounts, *vdispls;
 
-  MPI_check_comm (comm);
 
   vroot = (int)C_num_to_int (root);
 
@@ -997,7 +953,6 @@ C_word MPI_scatterv_u32vector (C_word sendbuf, C_word sendlengths,
 {
   int len, vroot; int  *vsendlengths, *vsendcounts, *vdispls;
 
-  MPI_check_comm (comm);
 
   vroot = (int)C_num_to_int (root);
 
@@ -1030,7 +985,6 @@ C_word MPI_scatterv_s32vector (C_word sendbuf, C_word sendlengths,
 {
   int len, vroot; int *vsendlengths, *vsendcounts, *vdispls;
 
-  MPI_check_comm (comm);
 
   vroot = (int)C_num_to_int (root);
 
@@ -1064,7 +1018,6 @@ C_word MPI_scatterv_f32vector (C_word sendbuf, C_word sendlengths,
 {
   int len, vroot; int *vsendlengths, *vsendcounts, *vdispls;
 
-  MPI_check_comm (comm);
 
   vroot = (int)C_num_to_int (root);
 
@@ -1097,7 +1050,6 @@ C_word MPI_scatterv_f64vector (C_word sendbuf, C_word sendlengths,
 {
   int len, vroot; int *vsendlengths, *vsendcounts, *vdispls;
 
-  MPI_check_comm (comm);
 
   vroot = (int)C_num_to_int (root);
 
@@ -1127,34 +1079,23 @@ C_word MPI_scatterv_f64vector (C_word sendbuf, C_word sendlengths,
 
 <#
 
-(define MPI_scatter_u8vector (foreign-lambda scheme-object "MPI_scatter_u8vector"
-					     scheme-object scheme-object scheme-object scheme-object scheme-object))
-(define MPI_scatter_s8vector (foreign-lambda scheme-object "MPI_scatter_s8vector"
-					     scheme-object scheme-object scheme-object scheme-object scheme-object))
+(define MPI_scatter_u8vector (foreign-lambda scheme-object "MPI_scatter_u8vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
+(define MPI_scatter_s8vector (foreign-lambda scheme-object "MPI_scatter_s8vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_scatter_u16vector (foreign-lambda scheme-object "MPI_scatter_u16vector"
-					      scheme-object scheme-object scheme-object scheme-object scheme-object))
-(define MPI_scatter_s16vector (foreign-lambda scheme-object "MPI_scatter_s16vector"
-					      scheme-object scheme-object scheme-object scheme-object scheme-object))
+(define MPI_scatter_u16vector (foreign-lambda scheme-object "MPI_scatter_u16vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
+(define MPI_scatter_s16vector (foreign-lambda scheme-object "MPI_scatter_s16vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_scatter_u32vector (foreign-lambda scheme-object "MPI_scatter_u32vector"
-					      scheme-object scheme-object scheme-object scheme-object scheme-object))
-(define MPI_scatter_s32vector (foreign-lambda scheme-object "MPI_scatter_s32vector"
-					      scheme-object scheme-object scheme-object scheme-object scheme-object))
+(define MPI_scatter_u32vector (foreign-lambda scheme-object "MPI_scatter_u32vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
+(define MPI_scatter_s32vector (foreign-lambda scheme-object "MPI_scatter_s32vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
 
-(define MPI_scatter_f32vector (foreign-lambda scheme-object "MPI_scatter_f32vector"
-					      scheme-object scheme-object scheme-object scheme-object scheme-object))
-(define MPI_scatter_f64vector (foreign-lambda scheme-object "MPI_scatter_f64vector"
-					      scheme-object scheme-object scheme-object scheme-object scheme-object))
+(define MPI_scatter_f32vector (foreign-lambda scheme-object "MPI_scatter_f32vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
+(define MPI_scatter_f64vector (foreign-lambda scheme-object "MPI_scatter_f64vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
 
-(define MPI_scatter_data (foreign-lambda scheme-object "MPI_scatter_data" 
-                                         scheme-object scheme-object scheme-object
-                                         scheme-object scheme-object scheme-object ))
+(define MPI_scatter_data (foreign-lambda scheme-object "MPI_scatter_data" scheme-object scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_scatter_bytevector (foreign-lambda scheme-object "MPI_scatter_bytevector" 
-					       scheme-object scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_scatter_bytevector (foreign-lambda scheme-object "MPI_scatter_bytevector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
 
 (define (make-scatter make-obj obj-len scatter)
@@ -1171,13 +1112,13 @@ C_word MPI_scatterv_f64vector (C_word sendbuf, C_word sendlengths,
 	  (let ((recv (make-obj sendcount)))
 	    (scatter (void) sendcount recv root comm))))))
 
-(define (MPI:scatter-int data root comm)
+(define-mpi-checked (MPI:scatter-int data root comm)
   (let ((nprocs (MPI:comm-size comm)))
     (if (< (s32vector-length data) nprocs)
 	(error 'MPI:scatter-int "send data length is less than n "))
     (MPI_scatter_int data root comm)))
 
-(define (MPI:scatter-flonum data root comm)
+(define-mpi-checked (MPI:scatter-flonum data root comm)
   (let ((nprocs (MPI:comm-size comm)))
     (if (< (f64vector-length data) nprocs)
 	(error 'MPI:scatter-flonum "send data length is less than n "))
@@ -1187,7 +1128,7 @@ C_word MPI_scatterv_f64vector (C_word sendbuf, C_word sendlengths,
   (er-macro-transformer
    (lambda (x r c)
      (let* ((type     (cadr x))
-            (%define  (r 'define))
+            (%define (r 'define-mpi-checked))
             (name     (string->symbol (string-append "MPI:scatter-" (symbol->string type) "vector")))
             (makev    (string->symbol (string-append "make-" (symbol->string type) "vector")))
             (vlen     (string->symbol (string-append (symbol->string type) "vector-length")))
@@ -1204,9 +1145,9 @@ C_word MPI_scatterv_f64vector (C_word sendbuf, C_word sendlengths,
 (define-srfi4-scatter f64)
 
 
-(define MPI:scatter-bytevector (make-scatter make-blob blob-size MPI_scatter_bytevector))
+(define-mpi-checked MPI:scatter-bytevector (make-scatter make-blob blob-size MPI_scatter_bytevector))
 
-(define (MPI:scatter ty v sendcount root comm)
+(define-mpi-checked (MPI:scatter ty v sendcount root comm)
     (let ((myself (MPI:comm-rank comm))
 	  (nprocs (MPI:comm-size comm))
           (tysize (MPI:type-size ty)))
@@ -1221,54 +1162,24 @@ C_word MPI_scatterv_f64vector (C_word sendbuf, C_word sendlengths,
 	    (MPI_scatter_data ty (void) sendcount recv root comm)))))
 
 
-(define MPI_scatterv_bytevector (foreign-lambda scheme-object "MPI_scatterv_bytevector" 
-						scheme-object scheme-object scheme-object 
-						scheme-object scheme-object scheme-object 
-						scheme-object ))
+(define MPI_scatterv_bytevector (foreign-lambda scheme-object "MPI_scatterv_bytevector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
-(define MPI_scatterv_data (foreign-lambda scheme-object "MPI_scatterv_data" 
-                                          scheme-object scheme-object scheme-object scheme-object 
-                                          scheme-object scheme-object scheme-object 
-                                          scheme-object ))
+(define MPI_scatterv_data (foreign-lambda scheme-object "MPI_scatterv_data" mpi-datatype scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
-(define MPI_scatterv_u8vector (foreign-lambda scheme-object "MPI_scatterv_u8vector" 
-						scheme-object scheme-object scheme-object 
-						scheme-object scheme-object scheme-object 
-						scheme-object ))
-(define MPI_scatterv_s8vector (foreign-lambda scheme-object "MPI_scatterv_s8vector" 
-						scheme-object scheme-object scheme-object 
-						scheme-object scheme-object scheme-object 
-						scheme-object ))
+(define MPI_scatterv_u8vector (foreign-lambda scheme-object "MPI_scatterv_u8vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
+(define MPI_scatterv_s8vector (foreign-lambda scheme-object "MPI_scatterv_s8vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
 
-(define MPI_scatterv_u16vector (foreign-lambda scheme-object "MPI_scatterv_u16vector" 
-						scheme-object scheme-object scheme-object 
-						scheme-object scheme-object scheme-object 
-						scheme-object ))
-(define MPI_scatterv_s16vector (foreign-lambda scheme-object "MPI_scatterv_s16vector" 
-						scheme-object scheme-object scheme-object 
-						scheme-object scheme-object scheme-object 
-						scheme-object ))
+(define MPI_scatterv_u16vector (foreign-lambda scheme-object "MPI_scatterv_u16vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
+(define MPI_scatterv_s16vector (foreign-lambda scheme-object "MPI_scatterv_s16vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
 
-(define MPI_scatterv_u32vector (foreign-lambda scheme-object "MPI_scatterv_u32vector" 
-						scheme-object scheme-object scheme-object 
-						scheme-object scheme-object scheme-object 
-						scheme-object ))
-(define MPI_scatterv_s32vector (foreign-lambda scheme-object "MPI_scatterv_s32vector" 
-						scheme-object scheme-object scheme-object 
-						scheme-object scheme-object scheme-object 
-						scheme-object ))
+(define MPI_scatterv_u32vector (foreign-lambda scheme-object "MPI_scatterv_u32vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
+(define MPI_scatterv_s32vector (foreign-lambda scheme-object "MPI_scatterv_s32vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
 
-(define MPI_scatterv_f32vector (foreign-lambda scheme-object "MPI_scatterv_f32vector" 
-						scheme-object scheme-object scheme-object 
-						scheme-object scheme-object scheme-object 
-						scheme-object ))
-(define MPI_scatterv_f64vector (foreign-lambda scheme-object "MPI_scatterv_f64vector" 
-						scheme-object scheme-object scheme-object 
-						scheme-object scheme-object scheme-object 
-						scheme-object ))
+(define MPI_scatterv_f32vector (foreign-lambda scheme-object "MPI_scatterv_f32vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
+(define MPI_scatterv_f64vector (foreign-lambda scheme-object "MPI_scatterv_f64vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
 
 
@@ -1311,7 +1222,7 @@ C_word MPI_scatterv_f64vector (C_word sendbuf, C_word sendlengths,
   (er-macro-transformer
    (lambda (x r c)
      (let* ((type (cadr x))
-            (%define (r 'define))
+            (%define (r 'define-mpi-checked))
             (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
             (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
             (dimemcpy  (string->symbol (string-append (symbol->string type) "vector_dimemcpy")))
@@ -1328,10 +1239,10 @@ C_word MPI_scatterv_f64vector (C_word sendbuf, C_word sendlengths,
 (define-srfi4-scatterv f32)
 (define-srfi4-scatterv f64)
 					   
-(define MPI:scatterv-bytevector (make-scatterv blob-size make-blob bytevector_dimemcpy MPI_scatterv_bytevector))
+(define-mpi-checked MPI:scatterv-bytevector (make-scatterv blob-size make-blob bytevector_dimemcpy MPI_scatterv_bytevector))
 	  
 
-(define (MPI:scatterv ty data root comm)
+(define-mpi-checked (MPI:scatterv ty data root comm)
     (let ((myself (MPI:comm-rank comm))
 	  (nprocs (MPI:comm-size comm))
           (tysize (MPI:type-size ty)))
@@ -1373,12 +1284,11 @@ C_word MPI_scatterv_f64vector (C_word sendbuf, C_word sendlengths,
     (foreign-primitive scheme-object ((integer send)
 				      (scheme-object recv)
 				      (integer root)
-				      (scheme-object comm))
+				      (mpi-comm comm))
 #<<END
   int *vrecv; int rlen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   if (recv == C_SCHEME_UNDEFINED)
   {
@@ -1402,12 +1312,11 @@ END
     (foreign-primitive scheme-object ((double send)
 				      (scheme-object recv)
 				      (integer root)
-				      (scheme-object comm))
+				      (mpi-comm comm))
 #<<END
   double *vrecv; int rlen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   if (recv == C_SCHEME_UNDEFINED)
   {
@@ -1435,7 +1344,6 @@ C_word MPI_gather_bytevector (C_word send, C_word sendcount, C_word recv, C_word
   unsigned char *vrecv, *vsend; int  vroot, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
   C_i_check_bytevector (send);
 
   vroot  = (int)C_num_to_int (root);
@@ -1466,7 +1374,6 @@ C_word MPI_gather_data (C_word ty, C_word send, C_word sendcount, C_word recv, C
   unsigned char *vrecv, *vsend; int  vroot, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
   C_i_check_bytevector (send);
 
   vroot  = (int)C_num_to_int (root);
@@ -1498,7 +1405,6 @@ C_word MPI_gather_u8vector (C_word send, C_word sendcount, C_word recv, C_word r
   unsigned char *vrecv, *vsend; int  vroot, rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vroot  = (int)C_num_to_int (root);
   vsend  = C_c_u8vector(send);
@@ -1512,7 +1418,7 @@ C_word MPI_gather_u8vector (C_word send, C_word sendcount, C_word recv, C_word r
   else
   {
     vrecv  = C_c_u8vector(recv);
-    rlen   = C_8vector_length(recv);
+    rlen   = C_bytevector_length(recv);
     MPI_Gather(vsend, slen, MPI_UNSIGNED_CHAR, vrecv, slen, MPI_UNSIGNED_CHAR, vroot, Comm_val(comm));
     result = recv;
   }
@@ -1527,7 +1433,6 @@ C_word MPI_gather_s8vector (C_word send, C_word sendcount, C_word recv, C_word r
   char *vrecv, *vsend; int  vroot, rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vroot  = (int)C_num_to_int (root);
   vsend  = C_c_s8vector(send);
@@ -1556,7 +1461,6 @@ C_word MPI_gather_u16vector (C_word send, C_word sendcount, C_word recv, C_word 
   unsigned short *vrecv, *vsend; int  vroot, rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vroot  = (int)C_num_to_int (root);
   vsend  = C_c_u16vector(send);
@@ -1584,7 +1488,6 @@ C_word MPI_gather_s16vector (C_word send, C_word sendcount, C_word recv, C_word 
   short *vrecv, *vsend; int  vroot, rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vroot  = (int)C_num_to_int (root);
   vsend  = C_c_s16vector(send);
@@ -1613,7 +1516,6 @@ C_word MPI_gather_u32vector (C_word send, C_word sendcount, C_word recv, C_word 
   int *vrecv, *vsend; int  vroot, rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vroot  = (int)C_num_to_int (root);
   vsend  = C_c_u32vector(send);
@@ -1642,7 +1544,6 @@ C_word MPI_gather_s32vector (C_word send, C_word sendcount, C_word recv, C_word 
   int *vrecv, *vsend; int  vroot, rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vroot  = (int)C_num_to_int (root);
   vsend  = C_c_s32vector(send);
@@ -1671,7 +1572,6 @@ C_word MPI_gather_f32vector (C_word send, C_word sendcount, C_word recv, C_word 
   float *vrecv, *vsend; int  vroot, rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vroot  = (int)C_num_to_int (root);
   vsend  = C_c_f32vector(send);
@@ -1700,7 +1600,6 @@ C_word MPI_gather_f64vector (C_word send, C_word sendcount, C_word recv, C_word 
   double *vrecv, *vsend; int  vroot, rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vroot  = (int)C_num_to_int (root);
   vsend  = C_c_f64vector(send);
@@ -1729,7 +1628,6 @@ C_word MPI_gatherv_bytevector (C_word sendbuf, C_word recvbuf, C_word recvlength
 {
   int len, vroot; int *vrecvlengths, *vrecvcounts, *vdispls;
 
-  MPI_check_comm (comm);
 
   C_i_check_bytevector (sendbuf);
 
@@ -1766,7 +1664,6 @@ C_word MPI_gatherv_data (C_word ty, C_word sendbuf, C_word recvbuf, C_word recvl
 {
   int len, vroot; int *vrecvlengths, *vrecvcounts, *vdispls;
 
-  MPI_check_comm (comm);
 
   C_i_check_bytevector (sendbuf);
 
@@ -1804,13 +1701,12 @@ C_word MPI_gatherv_u8vector (C_word sendbuf, C_word recvbuf, C_word recvlengths,
 {
   int len, vroot; int *vrecvlengths, *vrecvcounts, *vdispls;
 
-  MPI_check_comm (comm);
 
   vroot = (int)C_num_to_int (root);
 
   if (recvbuf == C_SCHEME_UNDEFINED)
   {
-     MPI_Gatherv (C_c_u8vector(sendbuf), C_8vector_length(sendbuf), MPI_UNSIGNED_CHAR,
+     MPI_Gatherv (C_c_u8vector(sendbuf), C_bytevector_length(sendbuf), MPI_UNSIGNED_CHAR,
                   NULL, NULL, NULL, MPI_UNSIGNED_CHAR,
                   vroot, Comm_val(comm));
   }
@@ -1823,7 +1719,7 @@ C_word MPI_gatherv_u8vector (C_word sendbuf, C_word recvbuf, C_word recvlengths,
 
      MPI_counts_displs(len, vrecvlengths, vrecvcounts, vdispls);
   
-     MPI_Gatherv (C_c_u8vector(sendbuf), C_8vector_length(sendbuf), MPI_UNSIGNED_CHAR,
+     MPI_Gatherv (C_c_u8vector(sendbuf), C_bytevector_length(sendbuf), MPI_UNSIGNED_CHAR,
                   C_c_u8vector(recvbuf), vrecvcounts, vdispls, MPI_UNSIGNED_CHAR,
                   vroot, Comm_val(comm));
   }
@@ -1837,7 +1733,6 @@ C_word MPI_gatherv_s8vector (C_word sendbuf, C_word recvbuf, C_word recvlengths,
 {
   int len, vroot; int *vrecvlengths, *vrecvcounts, *vdispls;
 
-  MPI_check_comm (comm);
 
   vroot = (int)C_num_to_int (root);
 
@@ -1870,7 +1765,6 @@ C_word MPI_gatherv_u16vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
 {
   int len, vroot; int *vrecvlengths, *vrecvcounts, *vdispls;
 
-  MPI_check_comm (comm);
 
   vroot = (int)C_num_to_int (root);
 
@@ -1903,7 +1797,6 @@ C_word MPI_gatherv_s16vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
 {
   int len, vroot; int *vrecvlengths, *vrecvcounts, *vdispls;
 
-  MPI_check_comm (comm);
 
   vroot = (int)C_num_to_int (root);
 
@@ -1937,7 +1830,6 @@ C_word MPI_gatherv_u32vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
 {
   int len, vroot; int *vrecvlengths, *vrecvcounts, *vdispls;
 
-  MPI_check_comm (comm);
 
   vroot = (int)C_num_to_int (root);
 
@@ -1969,7 +1861,6 @@ C_word MPI_gatherv_s32vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
 {
   int len, vroot; int *vrecvlengths, *vrecvcounts, *vdispls;
 
-  MPI_check_comm (comm);
 
   vroot = (int)C_num_to_int (root);
 
@@ -2003,7 +1894,6 @@ C_word MPI_gatherv_f32vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
 {
   int len, vroot; int *vrecvlengths, *vrecvcounts, *vdispls;
 
-  MPI_check_comm (comm);
 
   vroot = (int)C_num_to_int (root);
 
@@ -2036,7 +1926,6 @@ C_word MPI_gatherv_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
 {
   int len, vroot; int *vrecvlengths, *vrecvcounts, *vdispls;
 
-  MPI_check_comm (comm);
 
   vroot = (int)C_num_to_int (root);
 
@@ -2065,35 +1954,23 @@ C_word MPI_gatherv_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
 <#
 
 
-(define MPI_gather_u8vector (foreign-lambda scheme-object "MPI_gather_u8vector"
-					    scheme-object scheme-object scheme-object scheme-object scheme-object))
-(define MPI_gather_s8vector (foreign-lambda scheme-object "MPI_gather_s8vector"
-					    scheme-object scheme-object scheme-object scheme-object scheme-object))
+(define MPI_gather_u8vector (foreign-lambda scheme-object "MPI_gather_u8vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
+(define MPI_gather_s8vector (foreign-lambda scheme-object "MPI_gather_s8vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_gather_u16vector (foreign-lambda scheme-object "MPI_gather_u16vector"
-					     scheme-object scheme-object scheme-object scheme-object scheme-object))
-(define MPI_gather_s16vector (foreign-lambda scheme-object "MPI_gather_s16vector"
-					     scheme-object scheme-object scheme-object scheme-object scheme-object))
+(define MPI_gather_u16vector (foreign-lambda scheme-object "MPI_gather_u16vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
+(define MPI_gather_s16vector (foreign-lambda scheme-object "MPI_gather_s16vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_gather_u32vector (foreign-lambda scheme-object "MPI_gather_u32vector"
-					     scheme-object scheme-object scheme-object scheme-object scheme-object))
-(define MPI_gather_s32vector (foreign-lambda scheme-object "MPI_gather_s32vector"
-					     scheme-object scheme-object scheme-object scheme-object scheme-object))
+(define MPI_gather_u32vector (foreign-lambda scheme-object "MPI_gather_u32vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
+(define MPI_gather_s32vector (foreign-lambda scheme-object "MPI_gather_s32vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
 
-(define MPI_gather_f32vector (foreign-lambda scheme-object "MPI_gather_f32vector"
-					     scheme-object scheme-object scheme-object scheme-object scheme-object))
-(define MPI_gather_f64vector (foreign-lambda scheme-object "MPI_gather_f64vector"
-					     scheme-object scheme-object scheme-object scheme-object scheme-object))
+(define MPI_gather_f32vector (foreign-lambda scheme-object "MPI_gather_f32vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
+(define MPI_gather_f64vector (foreign-lambda scheme-object "MPI_gather_f64vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
 
-(define MPI_gather_bytevector (foreign-lambda scheme-object "MPI_gather_bytevector" 
-					      scheme-object scheme-object scheme-object 
-                                              scheme-object scheme-object ))
+(define MPI_gather_bytevector (foreign-lambda scheme-object "MPI_gather_bytevector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_gather_data (foreign-lambda scheme-object "MPI_gather_data" 
-                                        scheme-object scheme-object scheme-object
-                                        scheme-object scheme-object scheme-object))
+(define MPI_gather_data (foreign-lambda scheme-object "MPI_gather_data" scheme-object scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
 
 (define (make-gather make-obj obj-len gather)
@@ -2111,7 +1988,7 @@ C_word MPI_gatherv_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
 	    (gather v sendcount recv root comm))))))
 
 
-(define (MPI:gather-int send root comm)
+(define-mpi-checked (MPI:gather-int send root comm)
   (let ((nprocs (MPI:comm-size comm))
 	(myself (MPI:comm-rank comm)))
     (if (= myself root)
@@ -2119,7 +1996,7 @@ C_word MPI_gatherv_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
 	(MPI_gather_int send (void) root comm))))
 
 
-(define (MPI:gather-flonum send root comm)
+(define-mpi-checked (MPI:gather-flonum send root comm)
   (let ((nprocs (MPI:comm-size comm))
 	(myself (MPI:comm-rank comm)))
     (if (= myself root)
@@ -2131,7 +2008,7 @@ C_word MPI_gatherv_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
   (er-macro-transformer
    (lambda (x r c)
      (let* ((type      (cadr x))
-            (%define   (r 'define))
+            (%define (r 'define-mpi-checked))
             (name      (string->symbol (string-append "MPI:gather-" (symbol->string type) "vector")))
             (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
             (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
@@ -2148,9 +2025,9 @@ C_word MPI_gatherv_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
 (define-srfi4-gather f64)
 
 
-(define MPI:gather-bytevector (make-gather make-blob blob-size MPI_gather_bytevector))
+(define-mpi-checked MPI:gather-bytevector (make-gather make-blob blob-size MPI_gather_bytevector))
 
-(define (MPI:gather ty v sendcount root comm)
+(define-mpi-checked (MPI:gather ty v sendcount root comm)
   (let ((myself (MPI:comm-rank comm))
         (nprocs (MPI:comm-size comm))
         (tysize (MPI:type-size ty)))
@@ -2165,54 +2042,24 @@ C_word MPI_gatherv_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
           (MPI_gather_data ty v sendcount recv root comm)))))
 
 
-(define MPI_gatherv_bytevector (foreign-lambda scheme-object "MPI_gatherv_bytevector" 
-					       scheme-object scheme-object scheme-object 
-					       scheme-object scheme-object scheme-object 
-					       scheme-object ))
+(define MPI_gatherv_bytevector (foreign-lambda scheme-object "MPI_gatherv_bytevector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
-(define MPI_gatherv_data (foreign-lambda scheme-object "MPI_gatherv_data" 
-					       scheme-object scheme-object scheme-object scheme-object 
-					       scheme-object scheme-object scheme-object 
-					       scheme-object ))
+(define MPI_gatherv_data (foreign-lambda scheme-object "MPI_gatherv_data" scheme-object scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
-(define MPI_gatherv_u8vector (foreign-lambda scheme-object "MPI_gatherv_u8vector" 
-					     scheme-object scheme-object scheme-object 
-					     scheme-object scheme-object scheme-object 
-					     scheme-object ))
-(define MPI_gatherv_s8vector (foreign-lambda scheme-object "MPI_gatherv_s8vector" 
-					     scheme-object scheme-object scheme-object 
-					     scheme-object scheme-object scheme-object 
-					     scheme-object ))
+(define MPI_gatherv_u8vector (foreign-lambda scheme-object "MPI_gatherv_u8vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
+(define MPI_gatherv_s8vector (foreign-lambda scheme-object "MPI_gatherv_s8vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
 
-(define MPI_gatherv_u16vector (foreign-lambda scheme-object "MPI_gatherv_u16vector" 
-					      scheme-object scheme-object scheme-object 
-					      scheme-object scheme-object scheme-object 
-					      scheme-object ))
-(define MPI_gatherv_s16vector (foreign-lambda scheme-object "MPI_gatherv_s16vector" 
-					      scheme-object scheme-object scheme-object 
-					      scheme-object scheme-object scheme-object 
-					      scheme-object ))
+(define MPI_gatherv_u16vector (foreign-lambda scheme-object "MPI_gatherv_u16vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
+(define MPI_gatherv_s16vector (foreign-lambda scheme-object "MPI_gatherv_s16vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
 
-(define MPI_gatherv_u32vector (foreign-lambda scheme-object "MPI_gatherv_u32vector" 
-					      scheme-object scheme-object scheme-object 
-					      scheme-object scheme-object scheme-object 
-					      scheme-object ))
-(define MPI_gatherv_s32vector (foreign-lambda scheme-object "MPI_gatherv_s32vector" 
-					      scheme-object scheme-object scheme-object 
-					      scheme-object scheme-object scheme-object 
-					      scheme-object ))
+(define MPI_gatherv_u32vector (foreign-lambda scheme-object "MPI_gatherv_u32vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
+(define MPI_gatherv_s32vector (foreign-lambda scheme-object "MPI_gatherv_s32vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
 
-(define MPI_gatherv_f32vector (foreign-lambda scheme-object "MPI_gatherv_f32vector" 
-					      scheme-object scheme-object scheme-object 
-					      scheme-object scheme-object scheme-object 
-					      scheme-object ))
-(define MPI_gatherv_f64vector (foreign-lambda scheme-object "MPI_gatherv_f64vector" 
-					      scheme-object scheme-object scheme-object 
-					      scheme-object scheme-object scheme-object 
-					      scheme-object ))
+(define MPI_gatherv_f32vector (foreign-lambda scheme-object "MPI_gatherv_f32vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
+(define MPI_gatherv_f64vector (foreign-lambda scheme-object "MPI_gatherv_f64vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
 
 (define (make-gatherv vlen makev simemcpy gatherv)
@@ -2250,7 +2097,7 @@ C_word MPI_gatherv_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
   (er-macro-transformer
    (lambda (x r c)
      (let* ((type      (cadr x))
-            (%define   (r 'define))
+            (%define (r 'define-mpi-checked))
             (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
             (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
             (simemcpy  (string->symbol (string-append (symbol->string type) "vector_simemcpy")))
@@ -2269,9 +2116,9 @@ C_word MPI_gatherv_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
 					   
 
 
-(define MPI:gatherv-bytevector (make-gatherv blob-size make-blob bytevector_simemcpy MPI_gatherv_bytevector))
+(define-mpi-checked MPI:gatherv-bytevector (make-gatherv blob-size make-blob bytevector_simemcpy MPI_gatherv_bytevector))
 
-(define (MPI:gatherv ty data root comm)
+(define-mpi-checked (MPI:gatherv ty data root comm)
   (let* ((myself (MPI:comm-rank comm))
          (nprocs (MPI:comm-size comm))
          (tysize (MPI:type-size ty))
@@ -2308,12 +2155,11 @@ C_word MPI_gatherv_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengths
 (define MPI_allgather_int 
     (foreign-primitive scheme-object ((integer send)
 				      (scheme-object recv)
-				      (scheme-object comm))
+				      (mpi-comm comm))
 #<<END
   int *vrecv; 
   C_word result; 
 
-  MPI_check_comm(comm);
 
   vrecv  = C_c_s32vector(recv);
 
@@ -2327,12 +2173,11 @@ END
 (define MPI_allgather_flonum 
     (foreign-primitive scheme-object ((double send)
 				      (scheme-object recv)
-				      (scheme-object comm))
+				      (mpi-comm comm))
 #<<END
   double *vrecv; 
   C_word result; 
 
-  MPI_check_comm(comm);
 
   vrecv  = C_c_f64vector(recv);
 
@@ -2350,7 +2195,6 @@ C_word MPI_allgather_bytevector (C_word sendbuf, C_word recvbuf, C_word recvleng
 {
   int len; int *vrecvlengths, *vrecvcounts, *vdispls;
 
-  MPI_check_comm (comm);
 
   C_i_check_bytevector (sendbuf);
   C_i_check_bytevector (recvbuf);
@@ -2375,7 +2219,6 @@ C_word MPI_allgather_data (C_word ty, C_word sendbuf, C_word recvbuf, C_word rec
 {
   int len; int *vrecvlengths, *vrecvcounts, *vdispls;
 
-  MPI_check_comm (comm);
 
   C_i_check_bytevector (sendbuf);
   C_i_check_bytevector (recvbuf);
@@ -2400,7 +2243,6 @@ C_word MPI_allgather_s8vector (C_word sendbuf, C_word recvbuf, C_word recvlength
 {
   int len; int *vrecvlengths, *vrecvcounts, *vdispls;
   char *vsend, *vrecv;
-  MPI_check_comm (comm);
 
   vsend  = C_c_s8vector(sendbuf);
   vrecv  = C_c_s8vector(recvbuf);
@@ -2424,7 +2266,6 @@ C_word MPI_allgather_u8vector (C_word sendbuf, C_word recvbuf, C_word recvlength
 {
   int len; int *vrecvlengths, *vrecvcounts, *vdispls;
   char *vsend, *vrecv;
-  MPI_check_comm (comm);
 
   vsend  = C_c_u8vector(sendbuf);
   vrecv  = C_c_u8vector(recvbuf);
@@ -2436,7 +2277,7 @@ C_word MPI_allgather_u8vector (C_word sendbuf, C_word recvbuf, C_word recvlength
   
   MPI_counts_displs(len, vrecvlengths, vrecvcounts, vdispls);
   
-  MPI_Allgatherv (vsend, C_8vector_length(sendbuf), MPI_UNSIGNED_CHAR,
+  MPI_Allgatherv (vsend, C_bytevector_length(sendbuf), MPI_UNSIGNED_CHAR,
 	          vrecv, vrecvcounts, vdispls, MPI_UNSIGNED_CHAR,
 	          Comm_val(comm));
 
@@ -2449,7 +2290,6 @@ C_word MPI_allgather_s16vector (C_word sendbuf, C_word recvbuf, C_word recvlengt
 {
   int len; int *vrecvlengths, *vrecvcounts, *vdispls;
   short *vsend, *vrecv;
-  MPI_check_comm (comm);
 
   vsend  = C_c_s16vector(sendbuf);
   vrecv  = C_c_s16vector(recvbuf);
@@ -2474,7 +2314,6 @@ C_word MPI_allgather_u16vector (C_word sendbuf, C_word recvbuf, C_word recvlengt
 {
   int len; int *vrecvlengths, *vrecvcounts, *vdispls;
   unsigned short *vsend, *vrecv;
-  MPI_check_comm (comm);
 
   vsend  = C_c_u16vector(sendbuf);
   vrecv  = C_c_u16vector(recvbuf);
@@ -2500,7 +2339,6 @@ C_word MPI_allgather_s32vector (C_word sendbuf, C_word recvbuf, C_word recvlengt
 {
   int len; int *vrecvlengths, *vrecvcounts, *vdispls;
   int *vsend, *vrecv;
-  MPI_check_comm (comm);
 
   vsend  = C_c_s32vector(sendbuf);
   vrecv  = C_c_s32vector(recvbuf);
@@ -2525,7 +2363,6 @@ C_word MPI_allgather_u32vector (C_word sendbuf, C_word recvbuf, C_word recvlengt
 {
   int len; int *vrecvlengths, *vrecvcounts, *vdispls;
   unsigned int *vsend, *vrecv;
-  MPI_check_comm (comm);
 
   vsend  = C_c_u32vector(sendbuf);
   vrecv  = C_c_u32vector(recvbuf);
@@ -2550,7 +2387,6 @@ C_word MPI_allgather_f32vector (C_word sendbuf, C_word recvbuf, C_word recvlengt
 {
   int len; int *vrecvlengths, *vrecvcounts, *vdispls;
   float *vsend, *vrecv;
-  MPI_check_comm (comm);
 
   vsend  = C_c_f32vector(sendbuf);
   vrecv  = C_c_f32vector(recvbuf);
@@ -2576,7 +2412,6 @@ C_word MPI_allgather_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengt
 {
   int len; int *vrecvlengths, *vrecvcounts, *vdispls;
   double *vsend, *vrecv;
-  MPI_check_comm (comm);
 
   vsend  = C_c_f64vector(sendbuf);
   vrecv  = C_c_f64vector(recvbuf);
@@ -2599,45 +2434,25 @@ C_word MPI_allgather_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengt
 
 
 
-(define MPI_allgather_s8vector (foreign-lambda scheme-object "MPI_allgather_s8vector" 
-					       scheme-object scheme-object scheme-object scheme-object 
-					       scheme-object scheme-object ))
+(define MPI_allgather_s8vector (foreign-lambda scheme-object "MPI_allgather_s8vector" scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
-(define MPI_allgather_u8vector (foreign-lambda scheme-object "MPI_allgather_u8vector" 
-					       scheme-object scheme-object scheme-object scheme-object 
-					       scheme-object scheme-object ))
+(define MPI_allgather_u8vector (foreign-lambda scheme-object "MPI_allgather_u8vector" scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
-(define MPI_allgather_s16vector (foreign-lambda scheme-object "MPI_allgather_s16vector" 
-						scheme-object scheme-object scheme-object scheme-object
-						scheme-object scheme-object ))
+(define MPI_allgather_s16vector (foreign-lambda scheme-object "MPI_allgather_s16vector" scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
-(define MPI_allgather_u16vector (foreign-lambda scheme-object "MPI_allgather_u16vector" 
-						scheme-object scheme-object scheme-object scheme-object
-						scheme-object scheme-object ))
+(define MPI_allgather_u16vector (foreign-lambda scheme-object "MPI_allgather_u16vector" scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
-(define MPI_allgather_s32vector (foreign-lambda scheme-object "MPI_allgather_s32vector" 
-						scheme-object scheme-object scheme-object scheme-object
-						scheme-object scheme-object ))
+(define MPI_allgather_s32vector (foreign-lambda scheme-object "MPI_allgather_s32vector" scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
-(define MPI_allgather_u32vector (foreign-lambda scheme-object "MPI_allgather_u32vector" 
-						scheme-object scheme-object scheme-object scheme-object
-						scheme-object scheme-object ))
+(define MPI_allgather_u32vector (foreign-lambda scheme-object "MPI_allgather_u32vector" scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
-(define MPI_allgather_f32vector (foreign-lambda scheme-object "MPI_allgather_f32vector" 
-						scheme-object scheme-object scheme-object scheme-object 
-						scheme-object scheme-object ))
+(define MPI_allgather_f32vector (foreign-lambda scheme-object "MPI_allgather_f32vector" scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
-(define MPI_allgather_f64vector (foreign-lambda scheme-object "MPI_allgather_f64vector" 
-						scheme-object scheme-object scheme-object scheme-object 
-						scheme-object scheme-object ))
+(define MPI_allgather_f64vector (foreign-lambda scheme-object "MPI_allgather_f64vector" scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
-(define MPI_allgather_bytevector (foreign-lambda scheme-object "MPI_allgather_bytevector" 
-						 scheme-object scheme-object scheme-object scheme-object
-						 scheme-object scheme-object ))
+(define MPI_allgather_bytevector (foreign-lambda scheme-object "MPI_allgather_bytevector" scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
-(define MPI_allgather_data (foreign-lambda scheme-object "MPI_allgather_data" 
-                                           scheme-object scheme-object scheme-object scheme-object scheme-object
-                                           scheme-object scheme-object ))
+(define MPI_allgather_data (foreign-lambda scheme-object "MPI_allgather_data" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object))
 
 
 (define (make-allgather vlen makev simemcpy allgather)
@@ -2659,11 +2474,11 @@ C_word MPI_allgather_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengt
 		(reverse lst))))))))
 
 
-(define (MPI:allgather-int send root comm)
+(define-mpi-checked (MPI:allgather-int send root comm)
   (let ((nprocs (MPI:comm-size comm)))
     (MPI_allgather_int send (make-s32vector nprocs 0) comm)))
 
-(define (MPI:allgather-flonum send root comm)
+(define-mpi-checked (MPI:allgather-flonum send root comm)
   (let ((nprocs (MPI:comm-size comm)))
     (MPI_allgather_flonum send (make-f64vector nprocs 0) comm)))
 	  
@@ -2671,7 +2486,7 @@ C_word MPI_allgather_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengt
   (er-macro-transformer
    (lambda (x r c)
      (let* ((type      (cadr x))
-            (%define   (r 'define))
+            (%define (r 'define-mpi-checked))
             (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
             (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
             (simemcpy  (string->symbol (string-append (symbol->string type) "vector_simemcpy")))
@@ -2689,10 +2504,10 @@ C_word MPI_allgather_f64vector (C_word sendbuf, C_word recvbuf, C_word recvlengt
 (define-srfi4-allgather f64)
 					   
 
-(define MPI:allgather-bytevector (make-allgather blob-size make-blob bytevector_simemcpy MPI_allgather_bytevector))
+(define-mpi-checked MPI:allgather-bytevector (make-allgather blob-size make-blob bytevector_simemcpy MPI_allgather_bytevector))
 
 
-(define (MPI:allgather ty v root comm)
+(define-mpi-checked (MPI:allgather ty v root comm)
   (let ((myself (MPI:comm-rank comm))
         (nprocs (MPI:comm-size comm))
         (tysize (MPI:type-size ty)))
@@ -2726,7 +2541,6 @@ C_word MPI_alltoall_data (C_word ty, C_word data, C_word sendcount, C_word recv,
   unsigned char *vect, *vrecv; int slen, rlen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
   C_i_check_bytevector (recv);
 
   vrecv  = C_c_bytevector(recv);
@@ -2748,7 +2562,6 @@ C_word MPI_alltoall_bytevector (C_word data, C_word sendcount, C_word recv, C_wo
   unsigned char *vect, *vrecv; int rlen, slen, status;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
   C_i_check_bytevector (recv);
 
   vrecv  = C_c_bytevector(recv);
@@ -2770,7 +2583,6 @@ C_word MPI_alltoall_u8vector (C_word data, C_word sendcount, C_word recv, C_word
   unsigned char *vect, *vrecv; int rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vrecv  = C_c_u8vector(recv);
   rlen   = (int)C_num_to_int (recvcount);
@@ -2789,7 +2601,6 @@ C_word MPI_alltoall_s8vector (C_word data, C_word sendcount, C_word recv, C_word
   char *vect, *vrecv; int rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vrecv  = C_c_s8vector(recv);
   rlen   = (int)C_num_to_int (recvcount);
@@ -2809,7 +2620,6 @@ C_word MPI_alltoall_u16vector (C_word data, C_word sendcount, C_word recv, C_wor
   unsigned short *vect, *vrecv; int rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vrecv  = C_c_u16vector(recv);
   rlen   = (int)C_num_to_int (recvcount);
@@ -2828,7 +2638,6 @@ C_word MPI_alltoall_s16vector (C_word data, C_word sendcount, C_word recv, C_wor
   short *vect, *vrecv; int rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vrecv  = C_c_s16vector(recv);
   rlen   = (int)C_num_to_int (recvcount);
@@ -2848,7 +2657,6 @@ C_word MPI_alltoall_u32vector (C_word data, C_word sendcount, C_word recv, C_wor
   unsigned int *vect, *vrecv; int rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vrecv  = C_c_u32vector(recv);
   rlen   = (int)C_num_to_int (recvcount);
@@ -2867,7 +2675,6 @@ C_word MPI_alltoall_s32vector (C_word data, C_word sendcount, C_word recv, C_wor
   int *vect, *vrecv; int rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vrecv  = C_c_s32vector(recv);
   rlen   = (int)C_num_to_int (recvcount);
@@ -2887,7 +2694,6 @@ C_word MPI_alltoall_f32vector (C_word data, C_word sendcount, C_word recv, C_wor
   float *vect, *vrecv; int rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vrecv  = C_c_f32vector(recv);
   rlen   = (int)C_num_to_int (recvcount);
@@ -2907,7 +2713,6 @@ C_word MPI_alltoall_f64vector (C_word data, C_word sendcount, C_word recv, C_wor
   double *vect, *vrecv; int rlen, slen;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   vrecv  = C_c_f64vector(recv);
   rlen   = (int)C_num_to_int (recvcount);
@@ -2930,8 +2735,6 @@ C_word MPI_alltoallv_data (C_word ty, C_word sendbuf, C_word sendlengths,
   int *vsendlengths, *vsendcounts, *vsenddispls;
   int *vrecvlengths, *vrecvcounts, *vrecvdispls;
 
-  MPI_check_comm (comm);
-  MPI_check_datatype (ty);
 
   C_i_check_bytevector (recvbuf);
   C_i_check_bytevector (sendbuf);
@@ -2966,7 +2769,6 @@ C_word MPI_alltoallv_bytevector (C_word sendbuf, C_word sendlengths,
   int *vsendlengths, *vsendcounts, *vsenddispls;
   int *vrecvlengths, *vrecvcounts, *vrecvdispls;
 
-  MPI_check_comm (comm);
 
   C_i_check_bytevector (recvbuf);
 
@@ -3002,7 +2804,6 @@ C_word MPI_alltoallv_u8vector (C_word sendbuf, C_word sendlengths,
   int *vsendlengths, *vsendcounts, *vsenddispls;
   int *vrecvlengths, *vrecvcounts, *vrecvdispls;
 
-  MPI_check_comm (comm);
 
   slen          = C_32vector_length(sendlengths);
   vsendlengths  = C_c_s32vector(sendlengths);
@@ -3033,7 +2834,6 @@ C_word MPI_alltoallv_s8vector (C_word sendbuf, C_word sendlengths,
   int *vsendlengths, *vsendcounts, *vsenddispls;
   int *vrecvlengths, *vrecvcounts, *vrecvdispls;
 
-  MPI_check_comm (comm);
 
   slen          = C_32vector_length(sendlengths);
   vsendlengths  = C_c_s32vector(sendlengths);
@@ -3066,7 +2866,6 @@ C_word MPI_alltoallv_u16vector (C_word sendbuf, C_word sendlengths,
   int *vsendlengths, *vsendcounts, *vsenddispls;
   int *vrecvlengths, *vrecvcounts, *vrecvdispls;
 
-  MPI_check_comm (comm);
 
   slen          = C_32vector_length(sendlengths);
   vsendlengths  = C_c_s32vector(sendlengths);
@@ -3099,7 +2898,6 @@ C_word MPI_alltoallv_s16vector (C_word sendbuf, C_word sendlengths,
   int *vsendlengths, *vsendcounts, *vsenddispls;
   int *vrecvlengths, *vrecvcounts, *vrecvdispls;
 
-  MPI_check_comm (comm);
 
   slen          = C_32vector_length(sendlengths);
   vsendlengths  = C_c_s32vector(sendlengths);
@@ -3133,7 +2931,6 @@ C_word MPI_alltoallv_u32vector (C_word sendbuf, C_word sendlengths,
   int *vsendlengths, *vsendcounts, *vsenddispls;
   int *vrecvlengths, *vrecvcounts, *vrecvdispls;
 
-  MPI_check_comm (comm);
 
   slen          = C_32vector_length(sendlengths);
   vsendlengths  = C_c_s32vector(sendlengths);
@@ -3166,7 +2963,6 @@ C_word MPI_alltoallv_s32vector (C_word sendbuf, C_word sendlengths,
   int *vsendlengths, *vsendcounts, *vsenddispls;
   int *vrecvlengths, *vrecvcounts, *vrecvdispls;
 
-  MPI_check_comm (comm);
 
   slen          = C_32vector_length(sendlengths);
   vsendlengths  = C_c_s32vector(sendlengths);
@@ -3198,7 +2994,6 @@ C_word MPI_alltoallv_f32vector (C_word sendbuf, C_word sendlengths,
   int *vsendlengths, *vsendcounts, *vsenddispls;
   int *vrecvlengths, *vrecvcounts, *vrecvdispls;
 
-  MPI_check_comm (comm);
 
   slen          = C_32vector_length(sendlengths);
   vsendlengths  = C_c_s32vector(sendlengths);
@@ -3229,7 +3024,6 @@ C_word MPI_alltoallv_f64vector (C_word sendbuf, C_word sendlengths,
   int *vsendlengths, *vsendcounts, *vsenddispls;
   int *vrecvlengths, *vrecvcounts, *vrecvdispls;
 
-  MPI_check_comm (comm);
 
   slen          = C_32vector_length(sendlengths);
   vsendlengths  = C_c_s32vector(sendlengths);
@@ -3254,45 +3048,25 @@ C_word MPI_alltoallv_f64vector (C_word sendbuf, C_word sendlengths,
 <#
 
 
-(define MPI_alltoall_s8vector (foreign-lambda scheme-object "MPI_alltoall_s8vector" 
-                                              scheme-object scheme-object scheme-object scheme-object 
-                                              scheme-object ))
+(define MPI_alltoall_s8vector (foreign-lambda scheme-object "MPI_alltoall_s8vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_alltoall_u8vector (foreign-lambda scheme-object "MPI_alltoall_u8vector" 
-                                              scheme-object scheme-object scheme-object scheme-object 
-                                              scheme-object ))
+(define MPI_alltoall_u8vector (foreign-lambda scheme-object "MPI_alltoall_u8vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_alltoall_s16vector (foreign-lambda scheme-object "MPI_alltoall_s16vector" 
-                                               scheme-object scheme-object scheme-object scheme-object
-                                               scheme-object ))
+(define MPI_alltoall_s16vector (foreign-lambda scheme-object "MPI_alltoall_s16vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_alltoall_u16vector (foreign-lambda scheme-object "MPI_alltoall_u16vector" 
-                                               scheme-object scheme-object scheme-object scheme-object
-                                               scheme-object ))
+(define MPI_alltoall_u16vector (foreign-lambda scheme-object "MPI_alltoall_u16vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_alltoall_s32vector (foreign-lambda scheme-object "MPI_alltoall_s32vector" 
-                                               scheme-object scheme-object scheme-object scheme-object
-                                               scheme-object ))
+(define MPI_alltoall_s32vector (foreign-lambda scheme-object "MPI_alltoall_s32vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_alltoall_u32vector (foreign-lambda scheme-object "MPI_alltoall_u32vector" 
-                                               scheme-object scheme-object scheme-object scheme-object
-                                               scheme-object ))
+(define MPI_alltoall_u32vector (foreign-lambda scheme-object "MPI_alltoall_u32vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_alltoall_f32vector (foreign-lambda scheme-object "MPI_alltoall_f32vector" 
-                                               scheme-object scheme-object scheme-object scheme-object 
-                                               scheme-object ))
+(define MPI_alltoall_f32vector (foreign-lambda scheme-object "MPI_alltoall_f32vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_alltoall_f64vector (foreign-lambda scheme-object "MPI_alltoall_f64vector" 
-                                               scheme-object scheme-object scheme-object scheme-object 
-                                               scheme-object ))
+(define MPI_alltoall_f64vector (foreign-lambda scheme-object "MPI_alltoall_f64vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_alltoall_bytevector (foreign-lambda scheme-object "MPI_alltoall_bytevector" 
-                                                scheme-object scheme-object scheme-object scheme-object
-                                                scheme-object ))
+(define MPI_alltoall_bytevector (foreign-lambda scheme-object "MPI_alltoall_bytevector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_alltoall_data (foreign-lambda scheme-object "MPI_alltoall_data" 
-                                          scheme-object scheme-object scheme-object scheme-object
-                                          scheme-object scheme-object ))
+(define MPI_alltoall_data (foreign-lambda scheme-object "MPI_alltoall_data" scheme-object scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
 
 (define (make-alltoall vlen makev simemcpy alltoall)
@@ -3316,7 +3090,7 @@ C_word MPI_alltoallv_f64vector (C_word sendbuf, C_word sendlengths,
   (er-macro-transformer
    (lambda (x r c)
      (let* ((type      (cadr x))
-            (%define   (r 'define))
+            (%define (r 'define-mpi-checked))
             (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
             (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
             (simemcpy  (string->symbol (string-append (symbol->string type) "vector_simemcpy")))
@@ -3335,10 +3109,10 @@ C_word MPI_alltoallv_f64vector (C_word sendbuf, C_word sendlengths,
 (define-srfi4-alltoall f64)
 					   
 
-(define MPI:alltoall-bytevector (make-alltoall blob-size make-blob bytevector_simemcpy MPI_alltoall_bytevector))
+(define-mpi-checked MPI:alltoall-bytevector (make-alltoall blob-size make-blob bytevector_simemcpy MPI_alltoall_bytevector))
 
 
-(define (MPI:alltoall ty v n comm)
+(define-mpi-checked (MPI:alltoall ty v n comm)
   (let ((nprocs (MPI:comm-size comm))
         (tysize (MPI:type-size ty)))
       (if (not (= (/ (blob-size v) tysize) (* nprocs n)))
@@ -3356,54 +3130,24 @@ C_word MPI_alltoallv_f64vector (C_word sendbuf, C_word sendlengths,
                 (reverse lst)))))))
 
 
-(define MPI_alltoallv_bytevector (foreign-lambda scheme-object "MPI_alltoallv_bytevector" 
-                                                 scheme-object scheme-object scheme-object 
-                                                 scheme-object scheme-object scheme-object 
-                                                 scheme-object scheme-object scheme-object ))
+(define MPI_alltoallv_bytevector (foreign-lambda scheme-object "MPI_alltoallv_bytevector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object scheme-object scheme-object))
 
-(define MPI_alltoallv_data (foreign-lambda scheme-object "MPI_alltoallv_data" 
-                                           scheme-object scheme-object scheme-object scheme-object 
-                                           scheme-object scheme-object scheme-object 
-                                           scheme-object scheme-object scheme-object ))
+(define MPI_alltoallv_data (foreign-lambda scheme-object "MPI_alltoallv_data" mpi-datatype scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object scheme-object scheme-object))
 
-(define MPI_alltoallv_u8vector (foreign-lambda scheme-object "MPI_alltoallv_u8vector" 
-                                               scheme-object scheme-object scheme-object 
-                                               scheme-object scheme-object scheme-object 
-                                               scheme-object scheme-object scheme-object ))
-(define MPI_alltoallv_s8vector (foreign-lambda scheme-object "MPI_alltoallv_s8vector" 
-                                               scheme-object scheme-object scheme-object 
-                                               scheme-object scheme-object scheme-object 
-                                               scheme-object scheme-object scheme-object ))
+(define MPI_alltoallv_u8vector (foreign-lambda scheme-object "MPI_alltoallv_u8vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object scheme-object scheme-object))
+(define MPI_alltoallv_s8vector (foreign-lambda scheme-object "MPI_alltoallv_s8vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object scheme-object scheme-object))
 
 
-(define MPI_alltoallv_u16vector (foreign-lambda scheme-object "MPI_alltoallv_u16vector" 
-                                                scheme-object scheme-object scheme-object 
-                                                scheme-object scheme-object scheme-object 
-                                                scheme-object scheme-object scheme-object ))
-(define MPI_alltoallv_s16vector (foreign-lambda scheme-object "MPI_alltoallv_s16vector" 
-                                                scheme-object scheme-object scheme-object 
-                                                scheme-object scheme-object scheme-object 
-                                                scheme-object scheme-object scheme-object ))
+(define MPI_alltoallv_u16vector (foreign-lambda scheme-object "MPI_alltoallv_u16vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object scheme-object scheme-object))
+(define MPI_alltoallv_s16vector (foreign-lambda scheme-object "MPI_alltoallv_s16vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object scheme-object scheme-object))
 
 
-(define MPI_alltoallv_u32vector (foreign-lambda scheme-object "MPI_alltoallv_u32vector" 
-                                                scheme-object scheme-object scheme-object 
-                                                scheme-object scheme-object scheme-object 
-                                                scheme-object scheme-object scheme-object ))
-(define MPI_alltoallv_s32vector (foreign-lambda scheme-object "MPI_alltoallv_s32vector" 
-                                                scheme-object scheme-object scheme-object 
-                                                scheme-object scheme-object scheme-object 
-                                                scheme-object scheme-object scheme-object ))
+(define MPI_alltoallv_u32vector (foreign-lambda scheme-object "MPI_alltoallv_u32vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object scheme-object scheme-object))
+(define MPI_alltoallv_s32vector (foreign-lambda scheme-object "MPI_alltoallv_s32vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object scheme-object scheme-object))
 
 
-(define MPI_alltoallv_f32vector (foreign-lambda scheme-object "MPI_alltoallv_f32vector" 
-                                                scheme-object scheme-object scheme-object 
-                                                scheme-object scheme-object scheme-object 
-                                                scheme-object scheme-object scheme-object ))
-(define MPI_alltoallv_f64vector (foreign-lambda scheme-object "MPI_alltoallv_f64vector" 
-                                                scheme-object scheme-object scheme-object 
-                                                scheme-object scheme-object scheme-object 
-                                                scheme-object scheme-object scheme-object ))
+(define MPI_alltoallv_f32vector (foreign-lambda scheme-object "MPI_alltoallv_f32vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object scheme-object scheme-object))
+(define MPI_alltoallv_f64vector (foreign-lambda scheme-object "MPI_alltoallv_f64vector" scheme-object scheme-object scheme-object scheme-object mpi-comm scheme-object scheme-object scheme-object scheme-object))
 
 
 (define (make-alltoallv vlen makev simemcpy alltoallv)
@@ -3436,7 +3180,7 @@ C_word MPI_alltoallv_f64vector (C_word sendbuf, C_word sendlengths,
   (er-macro-transformer
    (lambda (x r c)
      (let* ((type      (cadr x))
-            (%define   (r 'define))
+            (%define (r 'define-mpi-checked))
             (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
             (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
             (simemcpy  (string->symbol (string-append (symbol->string type) "vector_simemcpy")))
@@ -3454,10 +3198,10 @@ C_word MPI_alltoallv_f64vector (C_word sendbuf, C_word sendlengths,
 (define-srfi4-alltoallv f64)
 					   
 
-(define MPI:alltoallv-bytevector (make-alltoallv blob-size make-blob bytevector_simemcpy MPI_alltoallv_bytevector))
+(define-mpi-checked MPI:alltoallv-bytevector (make-alltoallv blob-size make-blob bytevector_simemcpy MPI_alltoallv_bytevector))
 
 
-(define (MPI:alltoallv ty data sendlens comm)
+(define-mpi-checked (MPI:alltoallv ty data sendlens comm)
   (let* ((nprocs (MPI:comm-size comm))
          (tysize (MPI:type-size ty)))
     ;; Distribute the lengths of the data from all processes
@@ -3513,12 +3257,11 @@ static MPI_Op reduce_floatop[] =
 				      (integer op)
 				      (integer root)
 				      (integer myself)
-				      (scheme-object comm))
+				      (mpi-comm comm))
 #<<END
   int n;
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   if (myself == root)
   {
@@ -3545,12 +3288,11 @@ END
 				      (integer op)
 				      (integer root)
 				      (integer myself)
-				      (scheme-object comm))
+				      (mpi-comm comm))
 #<<END
   double n; C_word *ptr;
   C_word result; 
 
-  MPI_check_comm(comm);
 
   if (myself == root)
   {
@@ -3581,7 +3323,6 @@ C_word MPI_reduce_s8vector (C_word data, C_word recv, C_word op, C_word root, C_
   char *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_s8vector(data);
   vroot  = (int)C_num_to_int (root);
@@ -3611,7 +3352,6 @@ C_word MPI_reduce_u8vector (C_word data, C_word recv, C_word op, C_word root, C_
   unsigned char *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_u8vector(data);
   vroot  = (int)C_num_to_int (root);
@@ -3619,14 +3359,14 @@ C_word MPI_reduce_u8vector (C_word data, C_word recv, C_word op, C_word root, C_
 
   if (recv == C_SCHEME_UNDEFINED)
   {
-     MPI_Reduce (vdata, NULL, C_8vector_length(data), MPI_UNSIGNED_CHAR,
+     MPI_Reduce (vdata, NULL, C_bytevector_length(data), MPI_UNSIGNED_CHAR,
 	         reduce_intop[vop], vroot, Comm_val(comm));
      result = C_SCHEME_UNDEFINED;
   }
   else
   {
      vrecv  = C_c_u8vector(recv);
-     MPI_Reduce (vdata, vrecv, C_8vector_length(data), MPI_UNSIGNED_CHAR,
+     MPI_Reduce (vdata, vrecv, C_bytevector_length(data), MPI_UNSIGNED_CHAR,
 	         reduce_intop[vop], vroot, Comm_val(comm));
      result = recv;
   }
@@ -3641,7 +3381,6 @@ C_word MPI_reduce_s16vector (C_word data, C_word recv, C_word op, C_word root, C
   short *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_s16vector(data);
   vroot  = (int)C_num_to_int (root);
@@ -3671,7 +3410,6 @@ C_word MPI_reduce_u16vector (C_word data, C_word recv, C_word op, C_word root, C
   unsigned short *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_u16vector(data);
   vroot  = (int)C_num_to_int (root);
@@ -3701,7 +3439,6 @@ C_word MPI_reduce_s32vector (C_word data, C_word recv, C_word op, C_word root, C
   int *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_s32vector(data);
   vroot  = (int)C_num_to_int (root);
@@ -3731,7 +3468,6 @@ C_word MPI_reduce_u32vector (C_word data, C_word recv, C_word op, C_word root, C
   unsigned int *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_u32vector(data);
   vroot  = (int)C_num_to_int (root);
@@ -3761,7 +3497,6 @@ C_word MPI_reduce_f32vector (C_word data, C_word recv, C_word op, C_word root, C
   float *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_f32vector(data);
   vroot  = (int)C_num_to_int (root);
@@ -3791,7 +3526,6 @@ C_word MPI_reduce_f64vector (C_word data, C_word recv, C_word op, C_word root, C
   double *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_f64vector(data);
   vroot  = (int)C_num_to_int (root);
@@ -3816,32 +3550,24 @@ C_word MPI_reduce_f64vector (C_word data, C_word recv, C_word op, C_word root, C
 
 <#
 
-(define MPI_reduce_s8vector (foreign-lambda scheme-object "MPI_reduce_s8vector" 
-					    scheme-object scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_reduce_s8vector (foreign-lambda scheme-object "MPI_reduce_s8vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_reduce_u8vector (foreign-lambda scheme-object "MPI_reduce_u8vector" 
-					    scheme-object scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_reduce_u8vector (foreign-lambda scheme-object "MPI_reduce_u8vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
 
-(define MPI_reduce_s16vector (foreign-lambda scheme-object "MPI_reduce_s16vector" 
-					     scheme-object scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_reduce_s16vector (foreign-lambda scheme-object "MPI_reduce_s16vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_reduce_u16vector (foreign-lambda scheme-object "MPI_reduce_u16vector" 
-					     scheme-object scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_reduce_u16vector (foreign-lambda scheme-object "MPI_reduce_u16vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
 
-(define MPI_reduce_s32vector (foreign-lambda scheme-object "MPI_reduce_s32vector" 
-					     scheme-object scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_reduce_s32vector (foreign-lambda scheme-object "MPI_reduce_s32vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_reduce_u32vector (foreign-lambda scheme-object "MPI_reduce_u32vector" 
-					     scheme-object scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_reduce_u32vector (foreign-lambda scheme-object "MPI_reduce_u32vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
 
-(define MPI_reduce_f32vector (foreign-lambda scheme-object "MPI_reduce_f32vector" 
-					     scheme-object scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_reduce_f32vector (foreign-lambda scheme-object "MPI_reduce_f32vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_reduce_f64vector (foreign-lambda scheme-object "MPI_reduce_f32vector" 
-					     scheme-object scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_reduce_f64vector (foreign-lambda scheme-object "MPI_reduce_f64vector" scheme-object scheme-object scheme-object scheme-object mpi-comm))
 
 (define (make-reduce vlen makev reduce)
   (lambda (send op root comm)
@@ -3851,11 +3577,11 @@ C_word MPI_reduce_f64vector (C_word data, C_word recv, C_word op, C_word root, C
 	  (reduce send (makev len) op root comm)
 	  (reduce send (void) op root comm)))))
 
-(define (MPI:reduce-int send op root comm)
+(define-mpi-checked (MPI:reduce-int send op root comm)
   (let ((myself (MPI:comm-rank comm)))
      (MPI_reduce_int send op root myself comm)))
 
-(define (MPI:reduce-flonum send op root comm)
+(define-mpi-checked (MPI:reduce-flonum send op root comm)
   (let ((myself (MPI:comm-rank comm)))
     (MPI_reduce_flonum send op root myself comm)))
 
@@ -3864,7 +3590,7 @@ C_word MPI_reduce_f64vector (C_word data, C_word recv, C_word op, C_word root, C
   (er-macro-transformer
    (lambda (x r c)
      (let* ((type      (cadr x))
-            (%define   (r 'define))
+            (%define (r 'define-mpi-checked))
             (vlen      (string->symbol (string-append (symbol->string type) "vector-length")))
             (makev     (string->symbol (string-append "make-" (symbol->string type) "vector")))
             (reduce    (string->symbol (string-append "MPI_reduce_" (symbol->string type) "vector")))
@@ -3887,12 +3613,11 @@ C_word MPI_reduce_f64vector (C_word data, C_word recv, C_word op, C_word root, C
 (define MPI_allreduce_int 
     (foreign-primitive scheme-object ((integer data)
 				      (integer op)
-				      (scheme-object comm))
+				      (mpi-comm comm))
 #<<END
   int n; 
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   n = 0;
   MPI_Allreduce(&data, &n, 1, MPI_INT, reduce_intop[op], Comm_val(comm));
@@ -3908,12 +3633,11 @@ END
 (define MPI_allreduce_flonum 
     (foreign-primitive scheme-object ((double data)
 				      (integer op)
-				      (scheme-object comm))
+				      (mpi-comm comm))
 #<<END
   double n; C_word *ptr;
   C_word result; 
 
-  MPI_check_comm(comm);
 
   n = 0;
   MPI_Allreduce(&data, &n, 1, MPI_DOUBLE, reduce_floatop[op], Comm_val(comm));
@@ -3935,7 +3659,6 @@ C_word MPI_allreduce_s8vector (C_word data, C_word recv, C_word op, C_word comm)
   char *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_s8vector(data);
   vrecv  = C_c_s8vector(recv);
@@ -3955,13 +3678,12 @@ C_word MPI_allreduce_u8vector (C_word data, C_word recv, C_word op, C_word comm)
   unsigned char *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_u8vector(data);
   vrecv  = C_c_u8vector(recv);
   vop    = (int)C_num_to_int (op);
 
-  MPI_Allreduce (vdata, vrecv, C_8vector_length(data), MPI_UNSIGNED_CHAR,
+  MPI_Allreduce (vdata, vrecv, C_bytevector_length(data), MPI_UNSIGNED_CHAR,
 	         reduce_intop[vop], Comm_val(comm));
   result = recv;
 
@@ -3975,7 +3697,6 @@ C_word MPI_allreduce_s16vector (C_word data, C_word recv, C_word op, C_word comm
   short *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_s16vector(data);
   vrecv  = C_c_s16vector(recv);
@@ -3995,7 +3716,6 @@ C_word MPI_allreduce_u16vector (C_word data, C_word recv, C_word op, C_word comm
   unsigned short *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_u16vector(data);
   vrecv  = C_c_u16vector(recv);
@@ -4015,7 +3735,6 @@ C_word MPI_allreduce_s32vector (C_word data, C_word recv, C_word op, C_word comm
   int *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_s32vector(data);
   vrecv  = C_c_s32vector(recv);
@@ -4035,7 +3754,6 @@ C_word MPI_allreduce_u32vector (C_word data, C_word recv, C_word op, C_word comm
   unsigned int *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_u32vector(data);
   vrecv  = C_c_u32vector(recv);
@@ -4055,7 +3773,6 @@ C_word MPI_allreduce_f32vector (C_word data, C_word recv, C_word op, C_word comm
   float *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_f32vector(data);
   vrecv  = C_c_f32vector(recv);
@@ -4075,7 +3792,6 @@ C_word MPI_allreduce_f64vector (C_word data, C_word recv, C_word op, C_word comm
   double *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_f64vector(data);
   vrecv  = C_c_f64vector(recv);
@@ -4090,30 +3806,22 @@ C_word MPI_allreduce_f64vector (C_word data, C_word recv, C_word op, C_word comm
 
 <#
 
-(define MPI_allreduce_s8vector (foreign-lambda scheme-object "MPI_allreduce_s8vector" 
-					       scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_allreduce_s8vector (foreign-lambda scheme-object "MPI_allreduce_s8vector" scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_allreduce_u8vector (foreign-lambda scheme-object "MPI_allreduce_u8vector" 
-					       scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_allreduce_u8vector (foreign-lambda scheme-object "MPI_allreduce_u8vector" scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_allreduce_s16vector (foreign-lambda scheme-object "MPI_allreduce_s16vector" 
-						scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_allreduce_s16vector (foreign-lambda scheme-object "MPI_allreduce_s16vector" scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_allreduce_u16vector (foreign-lambda scheme-object "MPI_allreduce_u16vector" 
-						scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_allreduce_u16vector (foreign-lambda scheme-object "MPI_allreduce_u16vector" scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_allreduce_s32vector (foreign-lambda scheme-object "MPI_allreduce_s32vector" 
-						scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_allreduce_s32vector (foreign-lambda scheme-object "MPI_allreduce_s32vector" scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_allreduce_u32vector (foreign-lambda scheme-object "MPI_allreduce_u32vector" 
-						scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_allreduce_u32vector (foreign-lambda scheme-object "MPI_allreduce_u32vector" scheme-object scheme-object scheme-object mpi-comm))
 
 
-(define MPI_allreduce_f32vector (foreign-lambda scheme-object "MPI_allreduce_f32vector" 
-						scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_allreduce_f32vector (foreign-lambda scheme-object "MPI_allreduce_f32vector" scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_allreduce_f64vector (foreign-lambda scheme-object "MPI_allreduce_f64vector" 
-						scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_allreduce_f64vector (foreign-lambda scheme-object "MPI_allreduce_f64vector" scheme-object scheme-object scheme-object mpi-comm))
 
 
 (define (make-allreduce vlen makev allreduce)
@@ -4121,17 +3829,17 @@ C_word MPI_allreduce_f64vector (C_word data, C_word recv, C_word op, C_word comm
     (let ((len    (vlen send)))
       (allreduce send (makev len) op comm))))
 
-(define (MPI:allreduce-int send op comm)
+(define-mpi-checked (MPI:allreduce-int send op comm)
   (MPI_allreduce_int send op comm))
 
-(define (MPI:allreduce-flonum send op comm)
+(define-mpi-checked (MPI:allreduce-flonum send op comm)
   (MPI_allreduce_flonum send op comm))
 	  
 (define-syntax define-srfi4-allreduce
   (er-macro-transformer
    (lambda (x r c)
      (let* ((type       (cadr x))
-            (%define    (r 'define))
+            (%define (r 'define-mpi-checked))
             (vlen       (string->symbol (string-append (symbol->string type) "vector-length")))
             (makev      (string->symbol (string-append "make-" (symbol->string type) "vector")))
             (allreduce  (string->symbol (string-append "MPI_allreduce_" (symbol->string type) "vector")))
@@ -4153,12 +3861,11 @@ C_word MPI_allreduce_f64vector (C_word data, C_word recv, C_word op, C_word comm
 (define MPI_scan_int 
     (foreign-primitive scheme-object ((integer data)
 				      (integer op)
-				      (scheme-object comm))
+				      (mpi-comm comm))
 #<<END
   int n; 
   C_word result; C_word *ptr;
 
-  MPI_check_comm(comm);
 
   n = 0;
   MPI_Scan(&data, &n, 1, MPI_INT, reduce_intop[op], Comm_val(comm));
@@ -4174,12 +3881,11 @@ END
 (define MPI_scan_flonum 
     (foreign-primitive scheme-object ((double data)
 				      (integer op)
-				      (scheme-object comm))
+				      (mpi-comm comm))
 #<<END
   double n; C_word *ptr;
   C_word result; 
 
-  MPI_check_comm(comm);
 
   n = 0;
   MPI_Scan(&data, &n, 1, MPI_DOUBLE, reduce_floatop[op], Comm_val(comm));
@@ -4201,7 +3907,6 @@ C_word MPI_scan_s8vector (C_word data, C_word recv, C_word op, C_word comm)
   char *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_s8vector(data);
   vrecv  = C_c_s8vector(recv);
@@ -4221,13 +3926,12 @@ C_word MPI_scan_u8vector (C_word data, C_word recv, C_word op, C_word comm)
   unsigned char *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_u8vector(data);
   vrecv  = C_c_u8vector(recv);
   vop    = (int)C_num_to_int (op);
 
-  MPI_Scan (vdata, vrecv, C_8vector_length(data), MPI_UNSIGNED_CHAR,
+  MPI_Scan (vdata, vrecv, C_bytevector_length(data), MPI_UNSIGNED_CHAR,
 	         reduce_intop[vop], Comm_val(comm));
   result = recv;
 
@@ -4241,7 +3945,6 @@ C_word MPI_scan_s16vector (C_word data, C_word recv, C_word op, C_word comm)
   short *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_s16vector(data);
   vrecv  = C_c_s16vector(recv);
@@ -4261,7 +3964,6 @@ C_word MPI_scan_u16vector (C_word data, C_word recv, C_word op, C_word comm)
   unsigned short *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_u16vector(data);
   vrecv  = C_c_u16vector(recv);
@@ -4281,7 +3983,6 @@ C_word MPI_scan_s32vector (C_word data, C_word recv, C_word op, C_word comm)
   int *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_s32vector(data);
   vrecv  = C_c_s32vector(recv);
@@ -4301,7 +4002,6 @@ C_word MPI_scan_u32vector (C_word data, C_word recv, C_word op, C_word comm)
   unsigned int *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_u32vector(data);
   vrecv  = C_c_u32vector(recv);
@@ -4321,7 +4021,6 @@ C_word MPI_scan_f32vector (C_word data, C_word recv, C_word op, C_word comm)
   float *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_f32vector(data);
   vrecv  = C_c_f32vector(recv);
@@ -4341,7 +4040,6 @@ C_word MPI_scan_f64vector (C_word data, C_word recv, C_word op, C_word comm)
   double *vdata, *vrecv;
   C_word result;
 
-  MPI_check_comm (comm);
 
   vdata  = C_c_f64vector(data);
   vrecv  = C_c_f64vector(recv);
@@ -4356,30 +4054,22 @@ C_word MPI_scan_f64vector (C_word data, C_word recv, C_word op, C_word comm)
 
 <#
 
-(define MPI_scan_s8vector (foreign-lambda scheme-object "MPI_scan_s8vector" 
-					  scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_scan_s8vector (foreign-lambda scheme-object "MPI_scan_s8vector" scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_scan_u8vector (foreign-lambda scheme-object "MPI_scan_u8vector" 
-					  scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_scan_u8vector (foreign-lambda scheme-object "MPI_scan_u8vector" scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_scan_s16vector (foreign-lambda scheme-object "MPI_scan_s16vector" 
-					   scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_scan_s16vector (foreign-lambda scheme-object "MPI_scan_s16vector" scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_scan_u16vector (foreign-lambda scheme-object "MPI_scan_u16vector" 
-					   scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_scan_u16vector (foreign-lambda scheme-object "MPI_scan_u16vector" scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_scan_s32vector (foreign-lambda scheme-object "MPI_scan_s32vector" 
-					   scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_scan_s32vector (foreign-lambda scheme-object "MPI_scan_s32vector" scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_scan_u32vector (foreign-lambda scheme-object "MPI_scan_u32vector" 
-					   scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_scan_u32vector (foreign-lambda scheme-object "MPI_scan_u32vector" scheme-object scheme-object scheme-object mpi-comm))
 
 
-(define MPI_scan_f32vector (foreign-lambda scheme-object "MPI_scan_f32vector" 
-					   scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_scan_f32vector (foreign-lambda scheme-object "MPI_scan_f32vector" scheme-object scheme-object scheme-object mpi-comm))
 
-(define MPI_scan_f64vector (foreign-lambda scheme-object "MPI_scan_f64vector" 
-					   scheme-object scheme-object scheme-object scheme-object ))
+(define MPI_scan_f64vector (foreign-lambda scheme-object "MPI_scan_f64vector" scheme-object scheme-object scheme-object mpi-comm))
 
 
 (define (make-scan vlen makev scan)
@@ -4387,10 +4077,10 @@ C_word MPI_scan_f64vector (C_word data, C_word recv, C_word op, C_word comm)
     (let ((len    (vlen send)))
       (scan send (makev len) op comm))))
 
-(define (MPI:scan-int send op comm)
+(define-mpi-checked (MPI:scan-int send op comm)
   (MPI_scan_int send op comm))
 
-(define (MPI:scan-flonum send op comm)
+(define-mpi-checked (MPI:scan-flonum send op comm)
   (MPI_scan_flonum send op comm))
 
 
@@ -4399,7 +4089,7 @@ C_word MPI_scan_f64vector (C_word data, C_word recv, C_word op, C_word comm)
   (er-macro-transformer
    (lambda (x r c)
      (let* ((type       (cadr x))
-            (%define    (r 'define))
+            (%define (r 'define-mpi-checked))
             (vlen       (string->symbol (string-append (symbol->string type) "vector-length")))
             (makev      (string->symbol (string-append "make-" (symbol->string type) "vector")))
             (scan       (string->symbol (string-append "MPI_scan_" (symbol->string type) "vector")))

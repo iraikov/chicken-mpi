@@ -4,7 +4,7 @@
 ;; Leroy.
 ;;
 ;;
-;; Copyright 2007-2018 Ivan Raikov.
+;; Copyright 2007-2026 Ivan Raikov.
 ;;
 ;; This program is free software: you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -210,8 +210,11 @@
   
   MPI:init
   MPI:spawn
-  MPI:finalize 
-  MPI:wtime 
+  MPI:finalize
+  MPI:abort
+  MPI:initialized?
+  MPI:finalized?
+  MPI:wtime
 
   MPI:send
   MPI:send-fixnum
@@ -262,7 +265,7 @@
   MPI-rr-fold MPI-rr-foldi MPI-rr-map MPI-rr-for-each
   )
 		   
- (import scheme (chicken base) (chicken foreign) (chicken blob)
+ (import scheme (chicken base) (chicken condition) (chicken foreign) (chicken blob)
          (only (chicken string) ->string)
          srfi-1 srfi-4)
 
@@ -272,6 +275,8 @@
 
 <#
 
+
+(include "errors")
 (include "init")
 (include "datatype")
 (include "group")
@@ -281,7 +286,7 @@
 
 ;; MPI round-robin fold/map/for-each
 
-(define (MPI-rr-fold fn initial xs #!key (comm (MPI:get-comm-world)))
+(define-mpi-checked (MPI-rr-fold fn initial xs #!key (comm (MPI:get-comm-world)))
 
   (let (
 	(size        (MPI:comm-size comm))
@@ -309,7 +314,7 @@
     ))
 
 
-(define (MPI-rr-foldi fn initial is xs #!key (comm (MPI:get-comm-world)))
+(define-mpi-checked (MPI-rr-foldi fn initial is xs #!key (comm (MPI:get-comm-world)))
 
   (let (
 	(size        (MPI:comm-size comm))
@@ -337,7 +342,7 @@
     ))
 
 
-(define (MPI-rr-map fn xs #!key (comm (MPI:get-comm-world)))
+(define-mpi-checked (MPI-rr-map fn xs #!key (comm (MPI:get-comm-world)))
 
   (let (
 	 (size        (MPI:comm-size comm))
@@ -365,7 +370,7 @@
     ))
 	     
 
-(define (MPI-rr-for-each fn xs #!key (comm (MPI:get-comm-world)))
+(define-mpi-checked (MPI-rr-for-each fn xs #!key (comm (MPI:get-comm-world)))
 
   (let (
 	(size        (MPI:comm-size comm))

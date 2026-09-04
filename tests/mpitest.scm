@@ -62,7 +62,7 @@
 
 (define (make-srfi4-vector-range makev vlen vset! vref)
   (lambda (v i j)
-    (and (and (positive? j) (or (zero? i) (positive? i)) (< i j) (< (- j i) (vlen v)))
+    (and (and (positive? j) (or (zero? i) (positive? i)) (< i j) (<= (- j i) (vlen v)))
 	 (let loop ((v v) (newv (makev (- j i))) (n 0) (i i))
 	   (if (< i j)
 	       (let ((x (vref v i)))
@@ -166,6 +166,13 @@
 (define size        (MPI:comm-size comm-world))
 (define myrank      (MPI:comm-rank comm-world))
 
+;; Some tests are inherently rank-to-rank (they send to a specific other
+;; rank) and have nothing meaningful to do with a single-rank communicator.
+(define single-rank? (= size 1))
+
+(define (skip-single-rank name)
+  (print myrank ": " name " skipped (needs more than 1 rank, size = " size ")"))
+
 ;;(printf "rank ~A: Host ~A size ~A~%" myrank (get-host-name) size)
 (printf "rank ~A: size ~A~%" myrank size)
 
@@ -206,25 +213,29 @@
 
 (test-group "MPI test 1"
 
-  (if (zero? myrank)
-      (let ((data  "aa"))
-	(print myrank ": sending " data)
-	(MPI:send-bytevector (string->blob data) 1 0 comm-world)
-	(let ((n (blob->string (MPI:receive-bytevector MPI:any-source MPI:any-tag comm-world))))
-	  (print myrank ": received " n)
-	  (test-assert (check-string myrank n #\a size))))
-      (let* ((n   (blob->string (MPI:receive-bytevector MPI:any-source MPI:any-tag comm-world)))
-	     (n1  (string-append n "a")))
-	(print myrank ": received " n ", resending " n1)
-	(MPI:send-bytevector (string->blob n1) (modulo (+ myrank 1) size) 0 comm-world)
-	(test-assert (check-string myrank n #\a myrank))
-	))
+  (if single-rank?
+      (skip-single-rank "MPI test 1")
+      (if (zero? myrank)
+          (let ((data  "aa"))
+            (print myrank ": sending " data)
+            (MPI:send-bytevector (string->blob data) 1 0 comm-world)
+            (let ((n (blob->string (MPI:receive-bytevector MPI:any-source MPI:any-tag comm-world))))
+              (print myrank ": received " n)
+              (test-assert (check-string myrank n #\a size))))
+          (let* ((n   (blob->string (MPI:receive-bytevector MPI:any-source MPI:any-tag comm-world)))
+                 (n1  (string-append n "a")))
+            (print myrank ": received " n ", resending " n1)
+            (MPI:send-bytevector (string->blob n1) (modulo (+ myrank 1) size) 0 comm-world)
+            (test-assert (check-string myrank n #\a myrank))
+            )))
 )
 
 (MPI:barrier comm-world)
 
 (test-group "MPI test 2"
-  
+
+  (if single-rank?
+      (skip-single-rank "MPI test 2")
   (if (zero? myrank)
       (let ((data1  "aa")
 	    (data2  "bb"))
@@ -259,7 +270,7 @@
 			   (print myrank ": received " n2 " (tag " tag2 ")" " from " src
 				  ", resending " nn2)
 			   (MPI:send-bytevector (string->blob nn1) (modulo (+ 1 myrank) size) tag1 comm-world)
-			   (MPI:send-bytevector (string->blob nn2) (modulo (+ 1 myrank) size) tag2 comm-world))))))
+			   (MPI:send-bytevector (string->blob nn2) (modulo (+ 1 myrank) size) tag2 comm-world)))))))
 )
 
 ;; Barrier
@@ -760,11 +771,13 @@
 		     (print rank-in-c "[" myrank "]: received " n ", resending " n1)
 		     (MPI:send-bytevector n1 (modulo (+ 1 rank-in-c) size-of-c) 0 c))))
 	     (MPI:barrier comm-world)))))
-    (let* ((color (if (< size 4) 0 (modulo myrank 2)))
-	   (c (MPI:comm-split comm-world color 0)))
-      (if (zero? (modulo myrank 2))
-	  (send-in-comm c (string->blob "aa") "a")
-	  (send-in-comm c (string->blob "bb") "b"))))
+    (if single-rank?
+        (skip-single-rank "MPI test comm split")
+        (let* ((color (if (< size 4) 0 (modulo myrank 2)))
+               (c (MPI:comm-split comm-world color 0)))
+          (if (zero? (modulo myrank 2))
+              (send-in-comm c (string->blob "aa") "a")
+              (send-in-comm c (string->blob "bb") "b")))))
 
   ;; Cartesian topology
    (if (>= size 4)
@@ -796,5 +809,6 @@
   )
 
 
+(MPI:barrier comm-world)
 (MPI:finalize)
 (test-exit)

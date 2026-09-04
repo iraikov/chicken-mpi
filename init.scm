@@ -2,7 +2,7 @@
 ;; Chicken MPI interface. Based on the Caml/MPI interface by Xavier
 ;; Leroy.
 ;;
-;; Copyright 2007-2018 Ivan Raikov.
+;; Copyright 2007-2026 Ivan Raikov.
 ;;
 ;; This program is free software: you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -18,65 +18,7 @@
 ;; <http://www.gnu.org/licenses/>.
 ;;
 
-;; Error handling, initialization and finalization
-
-;; The following three functions are borrowed from the
-;; Chicken-specific parts of SWIG
-#>
-static void chicken_Panic (C_char *) C_noret;
-static void chicken_Panic (C_char *msg)
-{
-  C_word *a = C_alloc (C_SIZEOF_STRING (strlen (msg)));
-  C_word scmmsg = C_string2 (&a, msg);
-  C_halt (scmmsg);
-  exit (5); /* should never get here */
-}
-
-static void chicken_ThrowException(C_word value, C_word loc) C_noret;
-static void chicken_ThrowException(C_word value, C_word loc)
-{
-  char *aborthook = C_text("\003syserror-hook");
-
-  C_word *a = C_alloc(C_SIZEOF_STRING(strlen(aborthook)));
-  C_word abort = C_intern2(&a, aborthook);
-
-  abort = C_block_item(abort, 0);
-  if (C_immediatep(abort))
-    chicken_Panic(C_text("`##sys#error-hook' is not defined"));
-
-#if defined(C_BINARY_VERSION) && (C_BINARY_VERSION >= 8)
-  C_word rval[4] = { abort, C_SCHEME_UNDEFINED, value, loc };
-  C_do_apply(4, rval);
-#else
-  C_save(value);
-  C_do_apply(1, abort, C_SCHEME_UNDEFINED);
-#endif
-}
-
-void chicken_MPI_exception (int code, const char *loc, int msglen, const char *msg) 
-{
-  C_word *a;
-  C_word scmmsg, scmloc;
-  C_word list;
-
-  a = C_alloc (C_SIZEOF_STRING (msglen) + C_SIZEOF_LIST(2));
-  scmmsg = C_string2 (&a, (char *) msg);
-  list = C_list(&a, 2, C_fix(code), scmmsg);
-  a = C_alloc (C_SIZEOF_STRING (strlen(loc)));
-  scmloc = C_string2 (&a, (char *) loc);
-  chicken_ThrowException(list, scmloc);
-}
-
-static void MPI_error_handler(MPI_Comm * comm, int * errcode, ...)
-{
-  char errmsg[MPI_MAX_ERROR_STRING + 1];
-  int resultlen;
-
-  MPI_Error_string(*errcode, errmsg, &resultlen);
-
-  chicken_MPI_exception (*errcode, "mpi", resultlen, errmsg);
-}
-<#
+;; Initialization and finalization
 
 (define MPI_spawn 
   (foreign-primitive nonnull-c-pointer ((c-string command) (scheme-object arguments) (integer maxprocs)
@@ -212,8 +154,8 @@ static void MPI_error_handler(MPI_Comm * comm, int * errcode, ...)
 EOF
 ))
 
-(define (MPI:spawn command arguments maxprocs locations root comm)
-  (and (integer? maxprocs) (positive? maxprocs) 
+(define-mpi-checked (MPI:spawn command arguments maxprocs locations root comm)
+  (and (integer? maxprocs) (positive? maxprocs)
        (let  ((errcodes (make-s32vector maxprocs 0))
 	      (locations (map (lambda (p) (list (->string (car p)) (->string (cadr p)))) locations)))
 	 (let  ((intercomm (MPI_spawn command arguments maxprocs locations root comm errcodes)))
@@ -278,13 +220,17 @@ EOF
        }
        free (argv);
      }
+
      #if MPI_VERSION >= 3
-       MPI_Comm_create_errhandler((MPI_Comm_errhandler_function *)MPI_error_handler, &hdlr);
+       MPI_Comm_create_errhandler((MPI_Comm_errhandler_function *)chicken_MPI_error_handler, &hdlr);
        MPI_Comm_set_errhandler(MPI_COMM_WORLD, hdlr);
-     #else  
-       MPI_Errhandler_create((MPI_Handler_function *)MPI_error_handler, &hdlr);
+     #else
+       MPI_Errhandler_create((MPI_Handler_function *)chicken_MPI_error_handler, &hdlr);
        MPI_Errhandler_set(MPI_COMM_WORLD, hdlr);
      #endif
+
+     MPI_Add_error_class(&chicken_MPI_errclass);
+     MPI_Add_error_string(chicken_MPI_errclass, "invalid MPI struct datatype size");
   }
 
   C_return (C_SCHEME_UNDEFINED);
@@ -292,11 +238,7 @@ EOF
 ))
 
 
-(define (MPI:init . args)
-  (MPI_init args))
-    
-
-(define MPI:finalize 
+(define-mpi-checked MPI:finalize
   (foreign-primitive scheme-object ()
 #<<EOF
   MPI_Finalize();
@@ -304,7 +246,65 @@ EOF
 EOF
 ))
 
-(define MPI:wtime 
+;; MPI_Initialized/MPI_Finalized are specifically documented as callable at
+;; any time, including before MPI_Init.
+
+(define MPI:initialized?
+  (foreign-lambda* bool () "int flag; MPI_Initialized(&flag); C_return(flag);"))
+
+(define MPI:finalized?
+  (foreign-lambda* bool () "int flag; MPI_Finalized(&flag); C_return(flag);"))
+
+;; MPI_Abort is a last resort, non-collective and is itself part of the
+;; exit-handler's error path; it shouldn't be able to raise a new exception
+;; out of that path.
+
+(define MPI_abort_raw
+  (foreign-lambda* void ((mpi-comm comm) (int code))
+    "MPI_Abort(Comm_val(comm), code);"))
+
+(define (MPI:abort code #!optional (comm (MPI:get-comm-world)))
+  (MPI_abort_raw comm code))
+
+;; Automatic finalize-or-abort on process exit, installed once by MPI:init
+;; (see below), for consistency with mpi4py's atexit-registered finalize.
+;; A forgotten MPI:finalize or an unhandled Scheme exception would otherwise
+;; either leave the job improperly torn down or, hang peer ranks that
+;; are still waiting on the rank that just died. MPI_Finalize is collective
+;; and would cause a deadlock in that situation, so an error exit calls
+;; MPI_Abort instead, which is safe for a single rank to call.
+;;
+;; Guarded by MPI:initialized?/MPI:finalized? so this is not invoked for any
+;; program that never calls MPI:init, and safe if the program already
+;; called MPI:finalize itself. Wrapped in handle-exceptions so a problem
+;; here can't prevent the rest of CHICKEN's normal exit sequence from
+;; running.
+
+(define mpi-exit-code 0)
+(define mpi-exit-handler-installed? #f)
+
+(define (mpi-install-exit-handler!)
+  (unless mpi-exit-handler-installed?
+    (set! mpi-exit-handler-installed? #t)
+    (exit-handler
+     (let ((orig (exit-handler)))
+       (lambda (#!optional (code 0))
+         (set! mpi-exit-code code)
+         (orig code))))
+    (on-exit
+     (lambda ()
+       (handle-exceptions exn
+           #f
+         (when (and (MPI:initialized?) (not (MPI:finalized?)))
+           (if (zero? mpi-exit-code)
+               (MPI:finalize)
+               (MPI:abort mpi-exit-code))))))))
+
+(define-mpi-checked (MPI:init . args)
+  (MPI_init args)
+  (mpi-install-exit-handler!))
+
+(define-mpi-checked MPI:wtime
   (foreign-primitive scheme-object ()
 #<<EOF
   C_word result;

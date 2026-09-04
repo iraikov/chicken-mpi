@@ -38,32 +38,16 @@ static C_word MPI_comm_p(C_word obj)
 }
 
 
-static C_word MPI_check_comm (C_word obj) 
-{
- if (C_immediatep(obj)) 
-    {
-     chicken_MPI_exception (MPI_ERR_COMM, "MPI_check_comm",
-                                          32, "invalid MPI communicator object");
-    } else if (C_block_header(obj) == MPI_COMM_TAG) 
-      {
-       return C_SCHEME_UNDEFINED;
-      } else
-      {
-         chicken_MPI_exception (MPI_ERR_COMM, "MPI_check_comm",
-                                              32, "invalid MPI communicator object");
-      }
-}
 
 <#
 
 
-(define MPI:comm? (foreign-lambda scheme-object "MPI_comm_p" scheme-object))
+(define-mpi-checked MPI:comm? (foreign-lambda scheme-object "MPI_comm_p" scheme-object))
 
 (define MPI_comm_finalizer 
-    (foreign-safe-lambda* void ((scheme-object comm))
+    (foreign-safe-lambda* void ((mpi-comm comm))
 #<<END
    MPI_Comm *x;
-   MPI_check_comm (comm);
 
    x = Comm_val (comm);
 
@@ -100,12 +84,12 @@ END
 END
 ))
 
-(define (MPI:get-comm-world)
+(define-mpi-checked (MPI:get-comm-world)
   (let ((w (MPI_comm_world)))
     (MPI_alloc_comm w MPI_comm_finalizer)))
 
 
-(define MPI:comm-size
+(define-mpi-checked MPI:comm-size
     (foreign-primitive scheme-object ((scheme-object x))
 #<<END
    C_word *ptr;
@@ -128,7 +112,7 @@ END
 ))
 
 
-(define MPI:comm-rank
+(define-mpi-checked MPI:comm-rank
     (foreign-primitive scheme-object ((scheme-object x))
 #<<END
    C_word result;
@@ -170,16 +154,15 @@ C_word MPI_comm_compare(C_word comm1, C_word comm2)
 }
 <#
 
-(define MPI:comm-equal? (foreign-lambda scheme-object "MPI_comm_compare" scheme-object scheme-object))
+(define-mpi-checked MPI:comm-equal? (foreign-lambda scheme-object "MPI_comm_compare" scheme-object scheme-object))
 
 (define MPI_comm_split
-    (foreign-primitive nonnull-c-pointer ((scheme-object comm) (integer color) (integer key))
+    (foreign-primitive nonnull-c-pointer ((mpi-comm comm) (integer color) (integer key))
 #<<END
   C_word result;
 
   MPI_Comm newcomm;
 
-  MPI_check_comm (comm);
   if (MPI_comm_p (comm))
      {
        MPI_Comm_split(Comm_val(comm), color, key, &newcomm);
@@ -194,7 +177,7 @@ C_word MPI_comm_compare(C_word comm1, C_word comm2)
 END
 ))
 
-(define (MPI:comm-split comm color split)
+(define-mpi-checked (MPI:comm-split comm color split)
   (MPI_alloc_comm (MPI_comm_split comm color split) MPI_comm_finalizer))
 
 #>
@@ -206,12 +189,11 @@ C_word MPI_get_undefined(void)
 
 
 (define MPI_comm_create
-   (foreign-primitive nonnull-c-pointer ((scheme-object comm) (scheme-object group))
+   (foreign-primitive nonnull-c-pointer ((mpi-comm comm) (scheme-object group))
 #<<END
   C_word result;
   MPI_Comm newcomm;
   
-  MPI_check_comm (comm);
   if ((MPI_comm_p (comm)) && (MPI_group_p (group)))
   {
      MPI_Comm_create(Comm_val(comm), Group_val(group), &newcomm);
@@ -226,13 +208,13 @@ C_word MPI_get_undefined(void)
 END
 ))
 
-(define (MPI:comm-create comm group)
+(define-mpi-checked (MPI:comm-create comm group)
   (MPI_alloc_comm (MPI_comm_create comm group) MPI_comm_finalizer))
 
-(define MPI:undefined (foreign-lambda scheme-object "MPI_get_undefined"))
+(define-mpi-checked MPI:undefined (foreign-lambda scheme-object "MPI_get_undefined"))
 
 (define MPI_cart_create
-    (foreign-primitive nonnull-c-pointer ((scheme-object comm)
+    (foreign-primitive nonnull-c-pointer ((mpi-comm comm)
 					  (integer ndims)
 					  (integer nperiods)
 					  (nonnull-u32vector dims)
@@ -242,7 +224,6 @@ END
   MPI_Comm newcomm;
   C_word result;
 
-  MPI_check_comm (comm);
   if (MPI_comm_p (comm))
      {
       MPI_Cart_create(Comm_val(comm), ndims, dims, periods, 
@@ -258,7 +239,7 @@ END
 END
 ))
 
-(define (MPI:make-cart comm dims periods reorder)
+(define-mpi-checked (MPI:make-cart comm dims periods reorder)
   (MPI_alloc_comm
    (MPI_cart_create 
     comm (u32vector-length dims) (u32vector-length periods)
@@ -290,12 +271,12 @@ END
 ))
 
 
-(define (MPI:make-dims nnodes ndims)
+(define-mpi-checked (MPI:make-dims nnodes ndims)
   (if (integer? ndims)
       (MPI_dims_create nnodes ndims (make-u32vector ndims))
       (MPI_dims_create nnodes (u32vector-length ndims) ndims)))
 
-(define MPI:cart-rank
+(define-mpi-checked MPI:cart-rank
   (foreign-primitive scheme-object ((scheme-object comm)
 				    (scheme-object coords))
 #<<END
@@ -365,7 +346,7 @@ END
 END
 ))
 
-(define (MPI:cart-coords comm rank)
+(define-mpi-checked (MPI:cart-coords comm rank)
   (let ((ndims (MPI_cart_dim comm)))
     (MPI_cart_coords comm rank ndims (make-s32vector ndims))))
 
