@@ -18,8 +18,8 @@ The Chicken MPI egg provides a Scheme interface to a large subset of
 the MPI 1.2 procedures for communication.  It is based on the Ocaml
 MPI library by Xavier Leroy
 (http://forge.ocamlcore.org/projects/ocamlmpi/). The mpi library has
-been tested with Open MPI versions 1.2.4 - 1.10.1 and MPICH version
-3.2.
+been tested with Open MPI versions 1.2.4 - 4.1.6 and MPICH versions
+3.2-4.2.0.
 
 ### Initialization and time procedures
 
@@ -68,22 +68,24 @@ the calling process.
 
 ### Error handling
 
-Errors are reported as ordinary Scheme conditions, raised with
-`error`. This covers both genuine MPI failures (an invalid rank, a
-truncated message, and so on) and misuse of this egg's own procedures,
-such as passing the wrong kind of object where a communicator, group,
-or datatype is expected. Catch them with `condition-case` or
+Errors are reported as Scheme conditions, raised with `error`.
+This covers both MPI system failures (an invalid rank, a
+truncated message, and so on) and incorrect invocation of this egg's
+procedures, such as passing the wrong kind of object where a
+communicator, group, or datatype is expected.
+The raised errors can be caught them with `condition-case` or
 `handle-exceptions` as usual; an uncaught one prints a backtrace and
 ends the program.
 
-`MPI:init` also installs an exit handler so that a program doesn't
-need to call `MPI:finalize` itself: on a normal exit, `MPI:finalize`
-runs automatically if it hasn't already; on exit due to an uncaught
-error, `MPI:abort` runs instead. The distinction matters because
-`MPI:finalize` waits for every other process to reach it too -- calling
-it after one process has already died from an error would leave the
-rest of the job hanging, where `MPI:abort` tears the whole job down
-immediately. Neither runs if `MPI:init` was never called.
+`MPI:init` also installs an exit handler so that programs don't need
+to call `MPI:finalize`: on a normal exit, `MPI:finalize` runs
+automatically if it hasn't already; on exit due to an uncaught error,
+`MPI:abort` runs instead. The distinction is necessary because
+`MPI:finalize` is a collective call that waits for every process to
+reach it, and therefore calling it after one process has already died
+from an error would cause a deadlock, whereas `MPI:abort` tears the
+whole job down immediately. Neither procedure is called if `MPI:init`
+was never called.
 
 ### Handling of communicators
 
