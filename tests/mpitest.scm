@@ -20,7 +20,7 @@
 ;; <http://www.gnu.org/licenses/>.
 ;;
 
-(import scheme (chicken base) (chicken blob) (chicken pretty-print) (chicken format) (chicken string)
+(import scheme (chicken base) (chicken blob) (chicken gc) (chicken pretty-print) (chicken format) (chicken string)
         srfi-1 srfi-4 srfi-13 srfi-14 mpi test )
 
 (define (land . args)
@@ -808,6 +808,99 @@
 
   )
 
+
+(test-group "MPI test communicator finalization"
+
+  ;; Flush any communicators left behind as garbage by earlier test
+  ;; groups first, so the counts below reflect only what this group
+  ;; itself creates.
+  (gc #t)
+  (gc #t)
+
+  (let ((count0 (MPI:comm-free-count)))
+
+    ;; MPI_COMM_WORLD must never be freed by the garbage collector, no
+    ;; matter how much GC pressure it is put under.
+    (let loop ((i 0)) (when (< i 50) (gc #t) (loop (+ i 1))))
+    (test-assert (and (= size (MPI:comm-size comm-world))
+                       (= myrank (MPI:comm-rank comm-world))))
+    (test count0 (MPI:comm-free-count))
+
+    ;; Communicators that become garbage are freed exactly once each.
+    (let ((n 100))
+      (let loop ((i 0))
+        (when (< i n)
+          (MPI:comm-split comm-world 0 0)
+          (gc #t)
+          (loop (+ i 1))))
+      (test (+ count0 n) (MPI:comm-free-count)))
+
+    ;; comm-split with MPI:undefined legitimately yields MPI_COMM_NULL;
+    ;; the finalizer must tolerate that without crashing or counting
+    ;; it as a real free.
+    (let ((count1 (MPI:comm-free-count)))
+      (MPI:comm-split comm-world (MPI:undefined) 0)
+      (gc #t)
+      (gc #t)
+      (test count1 (MPI:comm-free-count)))
+
+    (test-assert (and (= size (MPI:comm-size comm-world))
+                      (= myrank (MPI:comm-rank comm-world))))
+    )
+  (MPI:barrier comm-world)
+  )
+
+(test-group "MPI test group and datatype finalization"
+
+  ;; Flush any groups or datatypes left behind as garbage by earlier
+  ;; test groups first, so the counts below reflect only what this
+  ;; group itself creates.
+  (gc #t)
+  (gc #t)
+
+  ;; Predefined datatypes (MPI_CHAR, MPI_INT, ...) must never be freed
+  ;; by the garbage collector, no matter how much GC pressure they are
+  ;; put under.
+  (let ((count0 (MPI:type-free-count)))
+    (let loop ((i 0)) (when (< i 50) (gc #t) (loop (+ i 1))))
+    (test-assert (= 4 (MPI:type-size MPI:type-fixnum)))
+    (test count0 (MPI:type-free-count))
+
+    ;; Datatypes genuinely created via MPI:make-type-struct are freed
+    ;; exactly once each once they become garbage.
+    (let ((n 50))
+      (let loop ((i 0))
+        (when (< i n)
+          (MPI:make-type-struct 2 (list 1 1) (list MPI:type-fixnum MPI:type-flonum))
+          (gc #t)
+          (loop (+ i 1))))
+      (test (+ count0 n) (MPI:type-free-count)))
+
+    (test-assert (= 4 (MPI:type-size MPI:type-fixnum))))
+
+  ;; Groups genuinely created (comm-group, unions, incl/excl, ...) are
+  ;; freed exactly once each once they become garbage.
+  (let ((count0 (MPI:group-free-count))
+        (n 50))
+    (let loop ((i 0))
+      (when (< i n)
+        (MPI:comm-group comm-world)
+        (gc #t)
+        (loop (+ i 1))))
+    (test (+ count0 n) (MPI:group-free-count))
+
+    ;; MPI_Group_incl with an empty selection legitimately yields the
+    ;; predefined constant MPI_GROUP_EMPTY; the finalizer must tolerate
+    ;; that without crashing or counting it as a real free.
+    (let ((world-group (MPI:comm-group comm-world))
+          (count1 (MPI:group-free-count)))
+      (test 0 (MPI:group-size (MPI:group-incl world-group (s32vector))))
+      (gc #t)
+      (gc #t)
+      (test count1 (MPI:group-free-count))))
+
+  (MPI:barrier comm-world)
+  )
 
 (MPI:barrier comm-world)
 (MPI:finalize)

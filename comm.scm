@@ -25,11 +25,11 @@
 ; Include into generated code, but don't parse:
 #>
 
-static C_word MPI_comm_p(C_word obj) 
+static C_word MPI_comm_p(C_word obj)
 {
   if (C_immediatep(obj)) {
     return C_SCHEME_FALSE;
-  } else if (C_block_header(obj) == MPI_COMM_TAG) 
+  } else if (C_block_header(obj) == MPI_COMM_TAG)
   {
     return C_SCHEME_TRUE;
   } else {
@@ -37,21 +37,35 @@ static C_word MPI_comm_p(C_word obj)
   }
 }
 
-
+/* Counts calls to the communicator finalizer below, in order to allow
+   confirmation whether a communicator was actually freed, since
+   MPI_Comm_free itself has no Scheme-visible effect. */
+static long chicken_MPI_comm_free_count = 0;
 
 <#
 
 
 (define-mpi-checked MPI:comm? (foreign-lambda scheme-object "MPI_comm_p" scheme-object))
 
-(define MPI_comm_finalizer 
+(define MPI:comm-free-count
+  (foreign-lambda* long () "C_return(chicken_MPI_comm_free_count);"))
+
+(define MPI_comm_finalizer
     (foreign-safe-lambda* void ((mpi-comm comm))
 #<<END
-   MPI_Comm *x;
+   MPI_Comm x;
 
    x = Comm_val (comm);
 
-   MPI_Comm_free (x);
+   /* MPI_Comm_split with color == MPI_UNDEFINED legitimately produces
+      MPI_COMM_NULL; freeing that isn't something every implementation
+      is guaranteed to accept gracefully, so skip it rather than pass
+      a null handle to MPI_Comm_free. */
+   if (x != MPI_COMM_NULL)
+   {
+     MPI_Comm_free (&x);
+     chicken_MPI_comm_free_count++;
+   }
 END
 ))
 
@@ -67,8 +81,14 @@ END
    newcomm.comm_data = comm;
    result = (C_word)&newcomm;
 
-   //C_do_register_finalizer(result, finalizer);
-   
+   /* finalizer is #f for wrappers around a communicator this module
+      doesn't own the lifetime of. E.g. MPI_COMM_WORLD must
+      never be freed. */
+   if (C_truep(finalizer))
+   {
+     C_do_register_finalizer(result, finalizer);
+   }
+
    C_return (result);
 END
 ))
@@ -86,7 +106,9 @@ END
 
 (define-mpi-checked (MPI:get-comm-world)
   (let ((w (MPI_comm_world)))
-    (MPI_alloc_comm w MPI_comm_finalizer)))
+    ;; MPI_COMM_WORLD is a predefined communicator owned by the MPI
+    ;; runtime, not something this wrapper should ever free.
+    (MPI_alloc_comm w #f)))
 
 
 (define-mpi-checked MPI:comm-size

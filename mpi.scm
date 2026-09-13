@@ -163,13 +163,14 @@
   MPI:allreduce-f64vector
   MPI:scan-f64vector
   
-  MPI:comm? 
+  MPI:comm?
   MPI:get-comm-world
   MPI:comm-size
   MPI:comm-rank
-  MPI:comm-equal? 
+  MPI:comm-equal?
   MPI:comm-split
   MPI:comm-create
+  MPI:comm-free-count
   MPI:undefined 
   MPI:make-cart
   MPI:make-dims
@@ -188,9 +189,11 @@
   MPI:group-excl 
   MPI:group-range-incl
   MPI:group-range-excl
+  MPI:group-free-count
 
   MPI:datatype?
   MPI:type-extent
+  MPI:type-free-count
   MPI:type-size
   MPI:type-char
   MPI:type-int

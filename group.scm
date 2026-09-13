@@ -24,11 +24,11 @@
 ; Include into generated code, but don't parse:
 #>
 
-static C_word MPI_group_p(C_word obj) 
+static C_word MPI_group_p(C_word obj)
 {
   if (C_immediatep(obj)) {
     return C_SCHEME_FALSE;
-  } else if (C_block_header(obj) == MPI_GROUP_TAG) 
+  } else if (C_block_header(obj) == MPI_GROUP_TAG)
   {
     return C_SCHEME_TRUE;
   } else {
@@ -36,13 +36,39 @@ static C_word MPI_group_p(C_word obj)
   }
 }
 
+/* Counts calls to the group finalizer below, so the count of freed
+   groups can be observed even though MPI_Group_free itself has no
+   Scheme-visible effect. */
+static long chicken_MPI_group_free_count = 0;
 
 <#
 
 (define-mpi-checked MPI:group? (foreign-lambda scheme-object "MPI_group_p" scheme-object))
 
-(define MPI_alloc_group 
-    (foreign-primitive scheme-object ((nonnull-c-pointer group))
+(define MPI:group-free-count
+  (foreign-lambda* long () "C_return(chicken_MPI_group_free_count);"))
+
+(define MPI_group_finalizer
+    (foreign-safe-lambda* void ((mpi-group group))
+#<<END
+   MPI_Group x;
+
+   x = Group_val (group);
+
+   /* MPI_Group_incl/excl with an empty selection legitimately produce
+      the predefined constant MPI_GROUP_EMPTY, which must never be
+      freed -- same reasoning as MPI_COMM_NULL in MPI_comm_finalizer. */
+   if (x != MPI_GROUP_EMPTY && x != MPI_GROUP_NULL)
+   {
+     MPI_Group_free (&x);
+     chicken_MPI_group_free_count++;
+   }
+END
+))
+
+(define MPI_alloc_group
+    (foreign-primitive scheme-object ((nonnull-c-pointer group)
+                                      (scheme-object finalizer))
 #<<END
 
    C_word result;
@@ -51,7 +77,12 @@ static C_word MPI_group_p(C_word obj)
    newg.tag = MPI_GROUP_TAG;
    newg.group_data = group;
    result = (C_word)&newg;
-   
+
+   if (C_truep(finalizer))
+   {
+     C_do_register_finalizer(result, finalizer);
+   }
+
    C_return (result);
 END
 ))
@@ -164,7 +195,7 @@ END
 ))
 
 (define-mpi-checked (MPI:comm-group comm)
-  (MPI_alloc_group (MPI_comm_group comm)))
+  (MPI_alloc_group (MPI_comm_group comm) MPI_group_finalizer))
 
 
 (define MPI_group_union
@@ -189,7 +220,7 @@ END
 ))
 
 (define-mpi-checked (MPI:group-union group1 group2)
-  (MPI_alloc_group (MPI_group_union group1 group2)))
+  (MPI_alloc_group (MPI_group_union group1 group2) MPI_group_finalizer))
 
 
 (define MPI_group_difference
@@ -214,7 +245,7 @@ END
 ))
 
 (define-mpi-checked (MPI:group-difference group1 group2)
-  (MPI_alloc_group (MPI_group_difference group1 group2)))
+  (MPI_alloc_group (MPI_group_difference group1 group2) MPI_group_finalizer))
 
 
 (define MPI_group_intersection
@@ -239,28 +270,24 @@ END
 ))
 
 (define-mpi-checked (MPI:group-intersection group1 group2)
-  (MPI_alloc_group (MPI_group_intersection group1 group2)))
+  (MPI_alloc_group (MPI_group_intersection group1 group2) MPI_group_finalizer))
 
 
 (define MPI_group_incl
     (foreign-primitive nonnull-c-pointer ((mpi-group group)
 					  (integer nranks)
-					  (scheme-object ranks))
+					  (s32vector vranks))
 #<<END
   C_word result;
-  int * vranks;
   MPI_Group newg;
-
-  C_i_check_vector (ranks);
 
   if ((MPI_group_p (group)))
   {
-     vranks  = C_c_s32vector (ranks); 
      MPI_Group_incl(Group_val(group), nranks, vranks, &newg);
      result = (C_word)newg;
   }
   else
-  { 
+  {
      result = (C_word)NULL;
   }
 
@@ -269,28 +296,24 @@ END
 ))
 
 (define-mpi-checked (MPI:group-incl group ranks)
-  (MPI_alloc_group (MPI_group_incl group (s32vector-length ranks) ranks)))
+  (MPI_alloc_group (MPI_group_incl group (s32vector-length ranks) ranks) MPI_group_finalizer))
 
 
 (define MPI_group_excl
     (foreign-primitive nonnull-c-pointer ((mpi-group group)
 					  (integer nranks)
-					  (scheme-object ranks))
+					  (s32vector vranks))
 #<<END
   C_word result;
-  int * vranks;
   MPI_Group newg;
-
-  C_i_check_vector (ranks);
 
   if ((MPI_group_p (group)))
   {
-     vranks  = C_c_s32vector (ranks); 
-     MPI_Group_incl(Group_val(group), nranks, vranks, &newg);
+     MPI_Group_excl(Group_val(group), nranks, vranks, &newg);
      result = (C_word)newg;
   }
   else
-  { 
+  {
      result = (C_word)NULL;
   }
 
@@ -299,7 +322,7 @@ END
 ))
 
 (define-mpi-checked (MPI:group-excl group ranks)
-  (MPI_alloc_group (MPI_group_excl group (s32vector-length ranks) ranks)))
+  (MPI_alloc_group (MPI_group_excl group (s32vector-length ranks) ranks) MPI_group_finalizer))
 
 
 ; Include into generated code, but don't parse:
@@ -312,15 +335,16 @@ static void MPI_extract_ranges (C_word ranges,
    C_i_check_vector (ranges);   
 
    nranges = C_unfix(C_i_vector_length (ranges));
+   *num = nranges;
 
-   for (i = 0; i < nranges; i++) 
+   for (i = 0; i < nranges; i++)
    {
      range = C_i_vector_ref (ranges, C_fix(i));
      exranges[(3*i)+0] = C_num_to_int(C_u_i_s32vector_ref(range, C_fix(0)));
      exranges[(3*i)+1] = C_num_to_int(C_u_i_s32vector_ref(range, C_fix(1)));
      exranges[(3*i)+2] = C_num_to_int(C_u_i_s32vector_ref(range, C_fix(2)));
    }
-   
+
 }
 <#
 
@@ -339,7 +363,10 @@ static void MPI_extract_ranges (C_word ranges,
   if ((MPI_group_p (group)))
   {
      MPI_extract_ranges (ranges, &num, exranges);
-     MPI_Group_range_incl(Group_val(group), num, exranges, &newg);
+     /* MPI_Group_range_incl expects an array of 3-int rows, not a flat
+        int*; exranges already holds num rows of 3 ints laid out that
+        way, so the cast just names the shape it already has. */
+     MPI_Group_range_incl(Group_val(group), num, (int (*)[3])exranges, &newg);
      result = (C_word)newg;
   }
   else
@@ -354,7 +381,8 @@ END
 
 (define-mpi-checked (MPI:group-range-incl group ranges)
   (let ((len (vector-length ranges)))
-    (MPI_alloc_group (MPI_group_range_incl group ranges (make-s32vector (* 3 len))))))
+    (MPI_alloc_group (MPI_group_range_incl group ranges (make-s32vector (* 3 len)))
+                      MPI_group_finalizer)))
 
 
 
@@ -373,7 +401,9 @@ END
   if ((MPI_group_p (group)))
   {
      MPI_extract_ranges (ranges, &num, exranges);
-     MPI_Group_range_excl(Group_val(group), num, exranges, &newg);
+     /* Same reshape as MPI_group_range_incl: exranges is already num
+        rows of 3 ints, just not typed that way. */
+     MPI_Group_range_excl(Group_val(group), num, (int (*)[3])exranges, &newg);
      result = (C_word)newg;
   }
   else
@@ -388,5 +418,6 @@ END
 
 (define-mpi-checked (MPI:group-range-excl group ranges)
   (let ((len (vector-length ranges)))
-    (MPI_alloc_group (MPI_group_range_excl group ranges (make-s32vector (* 3 len))))))
+    (MPI_alloc_group (MPI_group_range_excl group ranges (make-s32vector (* 3 len)))
+                      MPI_group_finalizer)))
 

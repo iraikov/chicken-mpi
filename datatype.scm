@@ -27,11 +27,11 @@
 ; Include into generated code, but don't parse:
 #>
 
-static C_word MPI_datatype_p(C_word obj) 
+static C_word MPI_datatype_p(C_word obj)
 {
   if (C_immediatep(obj)) {
     return C_SCHEME_FALSE;
-  } else if (C_block_header(obj) == MPI_DATATYPE_TAG) 
+  } else if (C_block_header(obj) == MPI_DATATYPE_TAG)
   {
     return C_SCHEME_TRUE;
   } else {
@@ -39,9 +39,15 @@ static C_word MPI_datatype_p(C_word obj)
   }
 }
 
-
+/* Counts calls to the datatype finalizer below, so the count of freed
+   datatypes can be observed even though MPI_Type_free itself has no
+   Scheme-visible effect. */
+static long chicken_MPI_datatype_free_count = 0;
 
 <#
+
+(define MPI:type-free-count
+  (foreign-lambda* long () "C_return(chicken_MPI_datatype_free_count);"))
 
 
 (define MPI_type_null
@@ -210,18 +216,27 @@ END
 (define-mpi-checked MPI:datatype? (foreign-lambda scheme-object "MPI_datatype_p" scheme-object))
 
 
-(define MPI_datatype_finalizer 
+(define MPI_datatype_finalizer
     (foreign-safe-lambda* void ((mpi-datatype ty))
 #<<END
    MPI_Datatype x;
 
    x = Datatype_val (ty);
 
-   MPI_Type_free (&x);
+   /* Defensive: this finalizer is only ever wired to a datatype this
+      module actually created (MPI:make-type-struct); MPI_DATATYPE_NULL
+      is guarded against anyway, on the same reasoning as the comm and
+      group finalizers; freeing it is not something every MPI
+      implementation is guaranteed to accept gracefully. */
+   if (x != MPI_DATATYPE_NULL)
+   {
+     MPI_Type_free (&x);
+     chicken_MPI_datatype_free_count++;
+   }
 END
 ))
 
-(define MPI_alloc_datatype 
+(define MPI_alloc_datatype
     (foreign-primitive scheme-object ((nonnull-c-pointer cty)
                                       (scheme-object finalizer))
 #<<END
@@ -233,8 +248,14 @@ END
    newdatatype.datatype_data = cty;
    result = (C_word)&newdatatype;
 
-   //C_do_register_finalizer(result, finalizer);
-   
+   /* finalizer is #f for wrappers around a predefined MPI datatype
+      (MPI_CHAR, MPI_INT, ...); those are owned by the MPI runtime
+      and must never be freed. */
+   if (C_truep(finalizer))
+   {
+     C_do_register_finalizer(result, finalizer);
+   }
+
    C_return (result);
 END
 ))
@@ -253,73 +274,74 @@ END
 
 (define MPI:type-char 
   (MPI_alloc_datatype (foreign-value "MPI_CHAR" nonnull-c-pointer) 
-                      MPI_datatype_finalizer))
+                      #f))
   
 
 (define MPI:type-int 
   (MPI_alloc_datatype (foreign-value "MPI_LONG" nonnull-c-pointer) 
-                      MPI_datatype_finalizer))
+                      #f))
   
 
 (define MPI:type-fixnum 
   (MPI_alloc_datatype (foreign-value "MPI_INT" nonnull-c-pointer) 
-                      MPI_datatype_finalizer))
+                      #f))
   
 
 (define MPI:type-flonum 
   (MPI_alloc_datatype (foreign-value "MPI_DOUBLE" nonnull-c-pointer) 
-                      MPI_datatype_finalizer))
+                      #f))
   
 
 (define MPI:type-byte 
   (MPI_alloc_datatype (foreign-value "MPI_BYTE" nonnull-c-pointer) 
-                      MPI_datatype_finalizer))
+                      #f))
   
 
 (define MPI:type-s8 
   (MPI_alloc_datatype (foreign-value "MPI_SIGNED_CHAR" nonnull-c-pointer) 
-                      MPI_datatype_finalizer))
+                      #f))
   
 
 (define MPI:type-u8 
   (MPI_alloc_datatype (foreign-value "MPI_UNSIGNED_CHAR" nonnull-c-pointer) 
-                      MPI_datatype_finalizer))
+                      #f))
   
 
 (define MPI:type-s16
   (MPI_alloc_datatype (foreign-value "MPI_SHORT" nonnull-c-pointer) 
-                      MPI_datatype_finalizer))
+                      #f))
   
 (define MPI:type-u16
   (MPI_alloc_datatype (foreign-value "MPI_UNSIGNED_SHORT" nonnull-c-pointer) 
-                      MPI_datatype_finalizer))
+                      #f))
   
 
 (define MPI:type-s32
   (MPI_alloc_datatype (foreign-value "MPI_INT" nonnull-c-pointer) 
-                      MPI_datatype_finalizer))
+                      #f))
   
 
 (define MPI:type-u32
   (MPI_alloc_datatype (foreign-value "MPI_UNSIGNED" nonnull-c-pointer) 
-                      MPI_datatype_finalizer))
+                      #f))
   
 
 (define MPI:type-f32
   (MPI_alloc_datatype (foreign-value "MPI_FLOAT" nonnull-c-pointer) 
-                      MPI_datatype_finalizer))
+                      #f))
   
 
 (define MPI:type-f64
   (MPI_alloc_datatype (foreign-value "MPI_DOUBLE" nonnull-c-pointer) 
-                      MPI_datatype_finalizer))
+                      #f))
   
 
 
-(define-mpi-checked MPI:make-type-struct 
+(define MPI_make_type_struct
     (foreign-primitive scheme-object ((int fieldcount)
                                       (scheme-object blocklens)
-                                      (scheme-object fieldtys))
+                                      (scheme-object fieldtys)
+                                      (scheme-object finalizer))
 #<<EOF
   int i, status, fldtysize;
   int *array_of_blocklens;
@@ -400,8 +422,16 @@ END
   }
 
   newdatatype.tag = MPI_DATATYPE_TAG;
-  newdatatype.datatype_data = (void *)newtype;
+  /* newtype may be a plain int handle (MPICH) rather than a pointer
+     (Open MPI); round-trip through intptr_t so the cast is safe
+     either way, same as Datatype_val in chicken-mpi.h. */
+  newdatatype.datatype_data = (void *)(intptr_t)newtype;
   result = (C_word)&newdatatype;
+
+  if (C_truep(finalizer))
+  {
+    C_do_register_finalizer(result, finalizer);
+  }
 
   free(array_of_blocklens);
   free(array_of_displs);
@@ -411,8 +441,11 @@ END
 EOF
 ))
 
+(define-mpi-checked (MPI:make-type-struct fieldcount blocklens fieldtys)
+  (MPI_make_type_struct fieldcount blocklens fieldtys MPI_datatype_finalizer))
 
-(define MPI_type_extent 
+
+(define MPI_type_extent
     (foreign-safe-lambda* void ((mpi-datatype ty)
                                 (u32vector result))
 #<<EOF
