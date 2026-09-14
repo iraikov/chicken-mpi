@@ -16,7 +16,7 @@ jobs:
     - uses: iraikov/setup-scheme@master
       with:
         implementation: 'chicken'
-        version: '5.2.0'
+        version: '6.0.0'
     - name: Install dependencies
       run: |
         sudo apt-get update -y
@@ -36,7 +36,7 @@ jobs:
     - uses: iraikov/setup-scheme@master
       with:
         implementation: 'chicken'
-        version: '5.2.0'
+        version: '6.0.0'
     - name: Install dependencies
       run: |
         brew install open-mpi
