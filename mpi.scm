@@ -268,7 +268,7 @@
   MPI-rr-fold MPI-rr-foldi MPI-rr-map MPI-rr-for-each
   )
 		   
- (import scheme (chicken base) (chicken condition) (chicken foreign) (chicken blob)
+ (import scheme (chicken base) (chicken condition) (chicken foreign) (chicken bytevector)
          (only (chicken string) ->string)
          srfi-1 srfi-4)
 
@@ -278,6 +278,9 @@
 
 <#
 
+(define blob? bytevector?)
+(define make-blob make-bytevector)
+(define blob-size bytevector-length)
 
 (include "errors")
 (include "init")

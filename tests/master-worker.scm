@@ -2,6 +2,8 @@
 ;; Can be run as follows: mpirun -np 4 csi -s master-worker.scm
 
 (use srfi-4 mpi)
+(import (chicken bytevector))
+(include "blob-compat.scm")
 
 (MPI:init)
 

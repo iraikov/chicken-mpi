@@ -20,8 +20,10 @@
 ;; <http://www.gnu.org/licenses/>.
 ;;
 
-(import scheme (chicken base) (chicken blob) (chicken gc) (chicken pretty-print) (chicken format) (chicken string)
+(import scheme (chicken base) (chicken bytevector) (chicken gc) (chicken pretty-print) (chicken format) (chicken string)
         srfi-1 srfi-4 srfi-13 srfi-14 mpi test )
+
+(include "blob-compat.scm")
 
 (define (land . args)
   (if (null? args) #t

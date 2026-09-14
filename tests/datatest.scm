@@ -1,6 +1,8 @@
 
-(import scheme (chicken base) (chicken blob) (chicken memory) (chicken pretty-print)
+(import scheme (chicken base) (chicken bytevector) (chicken memory) (chicken pretty-print)
         srfi-1 srfi-4 srfi-13 srfi-14 mpi test)
+
+(include "blob-compat.scm")
 
 (define (blob-range x i j) 
   (string->blob (string-copy (blob->string x) i j)))
